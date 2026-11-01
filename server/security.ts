@@ -8,8 +8,14 @@ export const canReview = (user: Actor) => [1, 3, 4].includes(user.roleId);
 export const canManageVotes = (user: Actor) => [1, 3].includes(user.roleId) || isDeveloper(user);
 export const canEditDocument = (user: Actor, ownerId: number) =>
   user.userId === ownerId || canReview(user) || isDeveloper(user);
-/** Deleting documents and vote sessions is reserved for the developer. */
+/** Deleting vote sessions is reserved for the developer. */
 export const canDelete = isDeveloper;
+/**
+ * The developer can delete any document. Its creator can delete it too, but only until the others have
+ * accepted it and only while it belongs to the current cycle; after that only the developer can.
+ */
+export const canDeleteDocument = (user: Actor, doc: { ownerId: number; status: string; inCurrentCycle: boolean }) =>
+  isDeveloper(user) || (user.userId === doc.ownerId && doc.status !== STATUS_APPROVED && doc.inCurrentCycle);
 /**
  * Fingerprint of a stored password hash. It is embedded in session cookies, so changing a user's
  * password (for example when the seat is handed to a new person) signs out every existing session.

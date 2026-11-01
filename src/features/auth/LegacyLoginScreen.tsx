@@ -50,8 +50,14 @@ export function LegacyLoginScreen({
               </div>
             )}
             <label>
-              اسم المستخدم
-              <input name="username" autoComplete="username" required maxLength={100} placeholder="أدخل اسم المستخدم" />
+              اسم المستخدم أو البريد الإلكتروني
+              <input
+                name="username"
+                autoComplete="username"
+                required
+                maxLength={254}
+                placeholder="أدخل اسم المستخدم أو بريدك"
+              />
             </label>
             <label>
               كلمة المرور

@@ -6,7 +6,7 @@ import { documentSchema } from '../schemas.js';
 import {
   type Actor,
   DEVELOPER_ROLE_ID,
-  canDelete,
+  canDeleteDocument,
   canEditDocument,
   canSeeRestrictedDocuments,
   canViewDocument,
@@ -125,7 +125,12 @@ export function documentRoutes({ query, transaction }: AppContext) {
   router.delete('/:id', async (req, res) => {
     const docId = id(req.params.id);
     const doc = await getDocument(docId, req.actor);
-    if (!canDelete(req.actor)) fail(403, 'حذف المستندات متاح للمطوّر فقط.');
+    const mayDelete = canDeleteDocument(req.actor, {
+      ownerId: doc.OwnerUserId,
+      status: doc.Status,
+      inCurrentCycle: doc.CycleId === (await getCurrentCycleId(query)),
+    });
+    if (!mayDelete) fail(403, 'لا يمكن حذف هذا المستند: يحذف صاحبه مستنداته قبل قبولها فقط، وبعد ذلك للمطوّر وحده.');
     await query('DELETE FROM "Documents" WHERE "DocId"=$1', [docId]);
     // Retain cloud assets for recovery; database deletion does not destroy a remote file.
     res.sendStatus(204);

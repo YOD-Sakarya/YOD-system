@@ -3,6 +3,7 @@ import { Check, Download, FileText, LoaderCircle, Pencil, Trash2 } from 'lucide-
 import { api, json } from '../../lib/api';
 import { getAuthHeaders } from '../../lib/auth';
 import { date } from '../../lib/format';
+import { canDeleteDocument } from '../../lib/documents';
 import { REVIEWER_ROLE_IDS, REVIEWER_TITLES, isDeveloper, reviewerRolesFor } from '../../lib/roles';
 import type { Document, User } from '../../types';
 import { Modal } from '../ui/Modal';
@@ -131,7 +132,7 @@ export function DocumentDialog({
                 <Pencil size={16} />
                 تعديل
               </button>
-              {developer && (
+              {canDeleteDocument(user, doc, archived) && (
                 <button className="button danger-button" disabled={busy || preview} onClick={() => setConfirm(true)}>
                   <Trash2 size={16} />
                   حذف

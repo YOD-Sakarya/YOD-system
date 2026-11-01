@@ -10,6 +10,7 @@ import {
   canEditDocument,
   canManageVotes,
   DEVELOPER_ROLE_ID,
+  hashPassword,
   sessionVersion,
   type Actor,
 } from './security.js';
@@ -74,7 +75,7 @@ test('user administration, cycle creation and storage are closed to non-develope
   });
 });
 
-test('leadership cannot delete documents or vote sessions', async () => {
+test("leadership cannot delete other people's documents or any vote session", async () => {
   await withActor(
     president,
     async base => {
@@ -84,7 +85,67 @@ test('leadership cannot delete documents or vote sessions', async () => {
         assert.equal(response.status, 403, path);
       }
     },
-    sql => (sql.includes('FROM "Documents"') ? [{ DocId: 3, OwnerUserId: 2 }] : []),
+    sql =>
+      sql.includes('FROM "Documents"')
+        ? [{ DocId: 3, OwnerUserId: 99, ownerRoleId: 7, Status: 'قيد المراجعة', CycleId: 1 }]
+        : sql.includes('"Cycles"')
+          ? [{ id: 1 }]
+          : [],
+  );
+});
+
+const ownDocument =
+  (Status: string, CycleId = 1) =>
+  (sql: string) =>
+    sql.includes('FROM "Documents"')
+      ? [{ DocId: 3, OwnerUserId: president.userId, ownerRoleId: 1, Status, CycleId }]
+      : sql.includes('"Cycles"')
+        ? [{ id: 1 }]
+        : [];
+
+test('a creator can delete their own document until it is accepted', async () => {
+  for (const status of ['قيد المراجعة', 'مرفوض', 'لا يحتاج إلى مراجعة']) {
+    await withActor(
+      president,
+      async base => {
+        const response = await fetch(base + '/api/documents/3', {
+          method: 'DELETE',
+          headers: { Cookie: cookieFor(president), Origin: base },
+        });
+        assert.equal(response.status, 204, status);
+      },
+      ownDocument(status),
+    );
+  }
+});
+
+test('once accepted, or once the year is archived, only the developer can delete it', async () => {
+  for (const [status, cycleId] of [
+    ['مقبول', 1],
+    ['قيد المراجعة', 2],
+  ] as const) {
+    await withActor(
+      president,
+      async base => {
+        const response = await fetch(base + '/api/documents/3', {
+          method: 'DELETE',
+          headers: { Cookie: cookieFor(president), Origin: base },
+        });
+        assert.equal(response.status, 403, `${status} in cycle ${cycleId}`);
+      },
+      ownDocument(status, cycleId),
+    );
+  }
+  await withActor(
+    developer,
+    async base => {
+      const response = await fetch(base + '/api/documents/3', {
+        method: 'DELETE',
+        headers: { Cookie: cookieFor(developer), Origin: base },
+      });
+      assert.equal(response.status, 204, 'developer deletes anything');
+    },
+    ownDocument('مقبول', 2),
   );
 });
 
@@ -147,4 +208,28 @@ test('deleting a year needs the exact year name and never touches data otherwise
     undefined,
     fakeTransaction,
   );
+});
+
+test('sign-in accepts the account email as well as the username, but never guesses between shared emails', async () => {
+  const password = hashPassword('a long password');
+  const login = (rows: unknown[]) => async (base: string) => {
+    const response = await fetch(base + '/api/auth/login', {
+      method: 'POST',
+      headers: { Origin: base, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'dev@example.com', password: 'a long password' }),
+    });
+    return { status: response.status, rows };
+  };
+  const row = { userId: 1, fullName: 'Dev', roleId: DEVELOPER_ROLE_ID, roleName: 'مطوّر', password, byUsername: false };
+  for (const [rows, expected] of [
+    [[row], 200], // one account owns that email
+    [[row, { ...row, userId: 2 }], 401], // two accounts share it: refuse
+    [[], 401],
+  ] as const) {
+    await withActor(
+      developer,
+      async base => assert.equal((await login([])(base)).status, expected),
+      () => [...rows],
+    );
+  }
 });

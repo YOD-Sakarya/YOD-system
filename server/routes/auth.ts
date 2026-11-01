@@ -37,14 +37,19 @@ export function publicAuthRoutes({ query, transaction, authProvider }: AppContex
 
   router.post('/login', limiter, async (req, res) => {
     const body = loginSchema.parse(req.body);
-    const [user] = await query(
+    // The sign-in field accepts the username or the account's email. A username always wins; an email only
+    // counts when exactly one account uses it (a shared email must not pick an account at random).
+    const candidates = await query(
       `SELECT u."UserId" AS "userId", u."FullName" AS "fullName", u."RoleId" AS "roleId",
-        u."PasswordHash" AS password, r."RoleName" AS "roleName" FROM "Users" u JOIN "Roles" r
-        ON r."RoleId"=u."RoleId" WHERE u."Username"=$1 LIMIT 1`,
+        u."PasswordHash" AS password, r."RoleName" AS "roleName", (u."Username"=$1) AS "byUsername"
+        FROM "Users" u JOIN "Roles" r ON r."RoleId"=u."RoleId"
+        WHERE u."Username"=$1 OR lower(btrim(u."Email"))=lower(btrim($1))
+        ORDER BY (u."Username"=$1) DESC LIMIT 2`,
       [body.username],
     );
+    const user = candidates.find(row => row.byUsername) ?? (candidates.length === 1 ? candidates[0] : undefined);
     if (!user || user.password.startsWith(NEON_MANAGED_PREFIX) || !verifyPassword(body.password, user.password))
-      fail(401, 'اسم المستخدم أو كلمة المرور غير صحيحة.');
+      return fail(401, 'اسم المستخدم أو كلمة المرور غير صحيحة.');
     const actor: Actor = { userId: user.userId, fullName: user.fullName, roleId: user.roleId, roleName: user.roleName };
     const token = jwt.sign({ sub: String(actor.userId), ver: sessionVersion(user.password) }, config.jwtSecret, {
       expiresIn: SESSION_SECONDS,

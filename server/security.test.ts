@@ -79,3 +79,60 @@ test('vote outcomes distinguish ties, empty ballots, and the actual winner', () 
     'B',
   );
 });
+
+// ---- Oversight committee: chair 10, deputy 12, rapporteur 13 ----
+import {
+  canSeeRestrictedDocuments,
+  canViewDocument,
+  isRestrictedDocument,
+  requiredReviewerRoles,
+  reviewStatus as oversightReviewStatus,
+} from './security.js';
+const member = (roleId: number): Actor => ({ userId: roleId, roleId, fullName: 'x', roleName: 'x' });
+
+test('a document uploaded by an oversight member needs the OTHER two oversight members', () => {
+  assert.deepEqual(requiredReviewerRoles(2, 10), [12, 13]);
+  assert.deepEqual(requiredReviewerRoles(2, 12), [10, 13]);
+  assert.deepEqual(requiredReviewerRoles(2, 13), [10, 12]);
+  assert.deepEqual(requiredReviewerRoles(2, 7), [], 'committee documents need no review');
+  assert.deepEqual(requiredReviewerRoles(1, 7), [1, 3, 4], 'proposals still go to leadership');
+});
+
+test('it stays pending until both others reviewed, and is accepted only if both accept', () => {
+  const required = [12, 13];
+  assert.equal(oversightReviewStatus([], required), 'قيد المراجعة');
+  assert.equal(oversightReviewStatus([{ role: 12, decision: 'مقبول' }], required), 'قيد المراجعة');
+  assert.equal(
+    oversightReviewStatus(
+      [
+        { role: 12, decision: 'مقبول' },
+        { role: 13, decision: 'مقبول' },
+      ],
+      required,
+    ),
+    'مقبول',
+  );
+  assert.equal(
+    oversightReviewStatus(
+      [
+        { role: 12, decision: 'مقبول' },
+        { role: 13, decision: 'مرفوض' },
+      ],
+      required,
+    ),
+    'مرفوض',
+  );
+});
+
+test('until accepted, only the oversight committee and the developer can see the document', () => {
+  assert.equal(isRestrictedDocument(10, 'قيد المراجعة'), true);
+  assert.equal(isRestrictedDocument(10, 'مرفوض'), true);
+  assert.equal(isRestrictedDocument(10, 'مقبول'), false);
+  assert.equal(isRestrictedDocument(7, 'قيد المراجعة'), false, 'other committees are not restricted');
+  for (const roleId of [10, 12, 13, 11]) assert.equal(canViewDocument(member(roleId), 10, 'قيد المراجعة'), true);
+  for (const roleId of [1, 2, 3, 4, 7, 9]) {
+    assert.equal(canViewDocument(member(roleId), 10, 'قيد المراجعة'), false, `role ${roleId} must not see it`);
+    assert.equal(canViewDocument(member(roleId), 10, 'مقبول'), true, `role ${roleId} sees it once accepted`);
+  }
+  assert.equal(canSeeRestrictedDocuments(member(1)), false);
+});

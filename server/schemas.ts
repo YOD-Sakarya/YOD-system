@@ -32,6 +32,6 @@ export const reviewSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  username: z.string().trim().min(1).max(100),
+  username: z.string().trim().min(1).max(254),
   password: z.string().min(1).max(256),
 });
