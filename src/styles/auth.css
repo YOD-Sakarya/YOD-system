@@ -1,0 +1,225 @@
+/* Sign-in and registration screens. */
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: white;
+  direction: rtl;
+}
+.login-form-side {
+  padding: 38px 9%;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.login-form-wrap {
+  max-width: 380px;
+  width: 100%;
+  margin: auto;
+  padding: 45px 0;
+}
+.login-tag {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 10px;
+  color: #7e8999;
+  margin-bottom: 18px;
+}
+.login-tag > span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--red);
+  border-radius: 50%;
+}
+.login-form-wrap h1 {
+  font-size: 34px;
+  letter-spacing: -1px;
+}
+.login-form-wrap > p {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 10px;
+  margin-bottom: 30px;
+}
+.login-form-side > footer {
+  font-size: 10px;
+  color: #9ba4b2;
+}
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.form-stack label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #4d5a6d;
+}
+.form-stack input:not([type='file']),
+.form-stack select,
+.form-stack textarea {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid #dee4ec;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 12px;
+  color: var(--ink);
+  font-weight: 400;
+  min-height: 44px;
+}
+.form-stack input::placeholder,
+.form-stack textarea::placeholder {
+  color: #a1aab8;
+  font-size: 11px;
+}
+.form-stack textarea {
+  resize: vertical;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.password-input {
+  display: flex;
+  align-items: center;
+  border: 1px solid #dee4ec;
+  border-radius: 6px;
+  padding-left: 7px;
+}
+.password-input:focus-within {
+  outline: 2px solid #a52c3860;
+  border-color: var(--red);
+}
+.form-stack .password-input input {
+  border: 0;
+  outline: none;
+  background: transparent;
+}
+.password-input .icon-button {
+  width: 30px;
+}
+.login-form-wrap .primary {
+  margin-top: 5px;
+  min-height: 46px;
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  padding-inline: 16px;
+}
+.login-form-wrap .login-switch {
+  text-align: center;
+  font-size: 11px;
+  margin-top: 20px;
+}
+.login-switch button {
+  color: var(--red);
+  font-size: 11px;
+  font-weight: 650;
+  padding: 0 5px;
+}
+.login-preview {
+  border-top: 1px solid var(--line);
+  padding-top: 22px;
+  margin-top: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #919baa;
+}
+.login-preview button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--red);
+  font-size: 11px;
+  font-weight: 600;
+}
+.login-story {
+  background: #a52c38;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 12%;
+  min-height: 100vh;
+}
+.story-content {
+  position: relative;
+  z-index: 1;
+}
+.story-content h2 {
+  font-size: 43px;
+  line-height: 1.75;
+  letter-spacing: -1.5px;
+  font-weight: 750;
+}
+.story-content > p {
+  font-size: 14px;
+  line-height: 2.2;
+  color: #ecc7cd;
+  margin-top: 22px;
+  max-width: 350px;
+}
+.story-features {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 45px;
+  font-size: 12px;
+  color: #f1d8dc;
+}
+.story-features > span {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.story-features svg {
+  opacity: 0.7;
+}
+.story-lines {
+  position: absolute;
+  inset: -20%;
+  opacity: 0.09;
+  transform: rotate(-28deg);
+  background: repeating-linear-gradient(90deg, transparent, transparent 90px, #fff 90px, #fff 91px);
+  pointer-events: none;
+}
+.story-lines:after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 90px, #fff 90px, #fff 91px);
+}
+.story-bottom {
+  position: absolute;
+  bottom: 40px;
+  right: 12%;
+  font-size: 11px;
+  color: #e1b3bb;
+}
+.form-error,
+.form-notice {
+  padding: 12px 14px;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.9;
+  font-weight: 400;
+}
+.form-error {
+  color: #9b2634;
+  background: #fff0f2;
+  border: 1px solid #f1d7dc;
+}
+.form-notice {
+  color: #617b71;
+  background: #edf6f0;
+  border: 1px solid #dfede4;
+}

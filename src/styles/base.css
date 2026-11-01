@@ -1,0 +1,121 @@
+/* Design tokens, document defaults and focus styles. */
+:root {
+  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
+  color: #202b3b;
+  background: #f5f7fa;
+  font-synthesis: none;
+  --red: #a52c38;
+  --red-hover: #8a202b;
+  --ink: #202b3b;
+  --muted: #657387;
+  --line: #e8ecf1;
+  --canvas: #f5f7fa;
+  --white: #fff;
+  --green: #23735c;
+  font-size: 14px;
+  line-height: 1.7;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+button {
+  color: inherit;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button,
+input,
+select,
+textarea {
+  outline-offset: 4px;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid #a52c3880;
+  outline-offset: 3px;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #a52c3860;
+  border-color: var(--red);
+}
+input,
+select,
+textarea {
+  min-width: 0;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+svg {
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+button {
+  border: 0;
+  background: none;
+}
+h1 {
+  font-size: 28px;
+  font-weight: 750;
+  line-height: 1.5;
+  letter-spacing: -0.8px;
+}
+h2 {
+  font-size: 16px;
+  font-weight: 700;
+}
+h3 {
+  font-size: 15px;
+}
+small {
+  font-size: 11px;
+}
+.muted {
+  color: var(--muted);
+}
+.small-text {
+  font-size: 12px;
+}
+.nowrap {
+  white-space: nowrap;
+}
+.full {
+  width: 100%;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}

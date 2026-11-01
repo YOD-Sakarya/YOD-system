@@ -1,0 +1,333 @@
+/* Dialogs and the forms inside them. */
+.modal {
+  border: 1px solid #e2e7ee;
+  border-radius: 12px;
+  padding: 0;
+  width: min(520px, calc(100% - 32px));
+  max-height: 90dvh;
+  color: var(--ink);
+  box-shadow: 0 20px 80px #15243830;
+  background: #fff;
+  overflow: auto;
+  direction: rtl;
+}
+.modal.wide {
+  width: min(700px, calc(100% - 32px));
+}
+.modal::backdrop {
+  background: #1b293d66;
+  backdrop-filter: blur(3px);
+}
+.modal > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 17px 23px;
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 2;
+}
+.modal > header h2 {
+  font-size: 15px;
+}
+.modal-body {
+  padding: 24px;
+}
+.modal-body > .form-error,
+.modal-body > .form-notice {
+  margin-bottom: 20px;
+}
+.form-stack.modal-body > .form-error,
+.form-stack.modal-body > .form-notice {
+  margin-bottom: 0;
+}
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  margin-top: 3px;
+  padding-top: 20px;
+}
+.upload-zone {
+  padding: 26px 15px;
+  border: 1px dashed #cdd6e2;
+  border-radius: 7px;
+  align-items: center !important;
+  background: #f8fafc;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+}
+.upload-zone > svg {
+  color: #9faabb;
+  margin-bottom: 7px;
+}
+.upload-zone > strong {
+  font-size: 12px;
+  font-weight: 550;
+  word-break: break-word;
+}
+.upload-zone > span {
+  font-size: 10px;
+  color: #9aa5b5;
+  font-weight: 400;
+}
+.upload-zone input {
+  font-size: 10px;
+  max-width: 100%;
+  margin-top: 8px;
+}
+.detail-title {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.detail-title > div {
+  flex: 1;
+}
+.detail-title h3 {
+  font-size: 18px;
+  line-height: 1.7;
+}
+.detail-title > div > span {
+  font-size: 10px;
+  color: var(--muted);
+}
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin: 0;
+  padding: 20px;
+  background: #f7f9fc;
+  border: 1px solid #edf0f5;
+  border-radius: 7px;
+}
+.details-grid dt {
+  font-size: 10px;
+  color: #8c97a7;
+}
+.details-grid dd {
+  font-size: 12px;
+  margin: 3px 0 0;
+}
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+.detail-actions .danger-button {
+  margin-right: auto;
+}
+.detail-reviews {
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+  padding-top: 21px;
+}
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.section-title h3 {
+  font-size: 14px;
+}
+.review-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 15px 0;
+  border-bottom: 1px solid #edf0f5;
+}
+.review-row > div {
+  flex: 1;
+}
+.review-row strong {
+  font-size: 11px;
+  display: block;
+}
+.review-row small {
+  font-size: 9px;
+  color: #8e99a9;
+  display: block;
+  margin-top: 4px;
+}
+.review-row p {
+  font-size: 11px;
+  color: #6c7b90;
+  margin-top: 7px;
+  white-space: pre-wrap;
+}
+.review-check {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #f3f5f8;
+  border: 1px solid #e3e8ef;
+  margin-top: 2px;
+}
+.review-check.done {
+  background: #edf6f0;
+  border-color: #d9eadd;
+  color: #5b9277;
+}
+.review-check > span {
+  width: 5px;
+  height: 5px;
+  background: #c2cbd8;
+  border-radius: 50%;
+}
+.review-form {
+  background: #f8fafc;
+  padding: 20px;
+  border: 1px solid #e5ebf2;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+.review-form h3 {
+  font-size: 13px;
+}
+.review-form .button {
+  align-self: flex-start;
+}
+.delete-confirm {
+  border: 1px solid #efccd2;
+  background: #fff4f5;
+  padding: 17px;
+  border-radius: 7px;
+  font-size: 11px;
+  margin-top: 20px;
+  color: #97313f;
+}
+.delete-confirm p {
+  margin-bottom: 14px;
+}
+.delete-confirm .button {
+  margin-left: 8px;
+  font-size: 10px;
+}
+.delete-confirm > strong {
+  display: block;
+  margin-bottom: 7px;
+}
+.option-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.option-fields legend {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4d5a6d;
+  margin-bottom: 8px;
+}
+.option-fields > div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.option-fields .text-link {
+  align-self: start;
+  padding: 5px 0;
+}
+.vote-dialog-title {
+  font-size: 21px;
+  margin-top: 16px;
+  margin-bottom: 10px;
+}
+.vote-dialog-title + p {
+  font-size: 12px;
+  line-height: 2;
+}
+.vote-dialog-title + p + p {
+  margin-top: 12px;
+}
+.ballot-options {
+  border: 0;
+  padding: 0;
+  margin: 22px 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ballot-options legend {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.ballot-options > label {
+  border: 1px solid #dfe5ee;
+  background: #fff;
+  border-radius: 7px;
+  padding: 13px;
+  cursor: pointer;
+}
+.ballot-options > label.selected {
+  border-color: #b26875;
+  background: #fffafb;
+}
+.option-top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+}
+.option-top input {
+  accent-color: var(--red);
+  width: 15px;
+  height: 15px;
+}
+.option-top b {
+  margin-right: auto;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.result-track {
+  height: 4px;
+  background: #edf0f5;
+  display: block;
+  margin-top: 13px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.result-track i {
+  display: block;
+  height: 100%;
+  background: #b17280;
+}
+.ballot-options ~ .primary {
+  margin-top: 17px;
+}
+.toast {
+  position: fixed;
+  bottom: 25px;
+  left: 30px;
+  background: #263e36;
+  color: #fff;
+  box-shadow: 0 6px 30px #1d342633;
+  z-index: 80;
+  border-radius: 8px;
+  padding: 12px 17px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  max-width: calc(100% - 40px);
+  font-size: 12px;
+}
+.toast .icon-button {
+  color: #b9d1c6;
+  width: 24px;
+  height: 24px;
+}

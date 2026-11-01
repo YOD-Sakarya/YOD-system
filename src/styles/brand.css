@@ -1,0 +1,50 @@
+/* Union logo and wordmark. */
+.brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.brand img {
+  width: 57px;
+  height: 57px;
+  object-fit: contain;
+}
+.brand strong {
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  letter-spacing: -1px;
+}
+.brand strong span {
+  font-size: 13px;
+  font-weight: 550;
+  letter-spacing: 0;
+  border-right: 1px solid #d6dce4;
+  padding-right: 13px;
+}
+.brand small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.brand.compact {
+  gap: 9px;
+}
+.brand.compact img {
+  width: 43px;
+  height: 43px;
+}
+.brand.compact strong {
+  font-size: 17px;
+  gap: 8px;
+}
+.brand.compact strong span {
+  font-size: 10px;
+  padding-right: 8px;
+}
+.brand.compact small {
+  font-size: 8px;
+  white-space: nowrap;
+}

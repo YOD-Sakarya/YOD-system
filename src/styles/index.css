@@ -1,0 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;450;500;550;600;650;700;750;800&display=swap');
+@import './base.css';
+@import './controls.css';
+@import './brand.css';
+@import './layout.css';
+@import './dashboard.css';
+@import './documents.css';
+@import './votes.css';
+@import './auth.css';
+@import './modal.css';
+@import './responsive.css';
+@import './auth-links.css';

@@ -1,0 +1,12 @@
+/* Help links under the sign-in form. */
+.auth-help {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+.auth-help .text-link {
+  font-size: 10px;
+}

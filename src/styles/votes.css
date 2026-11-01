@@ -1,0 +1,209 @@
+/* Vote sessions, calendar and committee cards. */
+.segmented {
+  display: inline-flex;
+  gap: 4px;
+  background: #e9edf3;
+  border-radius: 7px;
+  padding: 4px;
+  margin-bottom: 24px;
+}
+.segmented button {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 7px 18px;
+  border-radius: 5px;
+}
+.segmented button.active {
+  background: white;
+  color: var(--ink);
+  box-shadow: 0 1px 3px #2633450b;
+}
+.ballot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+.ballot-card {
+  text-align: right;
+  padding: 24px;
+  transition: border-color 0.15s;
+}
+.ballot-card:hover {
+  border-color: #b3bfce;
+}
+.ballot-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.ballot-card h2 {
+  font-size: 17px;
+}
+.ballot-card > p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 9px 0 23px;
+  min-height: 40px;
+}
+.ballot-preview {
+  display: grid;
+  gap: 10px;
+}
+.ballot-preview > div {
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  padding: 10px 12px;
+  background: #f6f8fb;
+  border: 1px solid #e9eef4;
+  border-radius: 5px;
+  font-size: 11px;
+  isolation: isolate;
+}
+.ballot-preview b {
+  margin-right: auto;
+  font-weight: 550;
+}
+.ballot-preview i {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: -1;
+  background: #e4ecf6;
+}
+.ballot-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+  padding-top: 17px;
+  margin-top: 22px;
+  font-size: 10px;
+  color: var(--muted);
+  gap: 10px;
+}
+.ballot-footer span:last-child {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--red);
+}
+.committees-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.committee-card {
+  padding: 23px;
+}
+.committee-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 17px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.committee-avatar {
+  width: 43px;
+  height: 43px;
+  border-radius: 10px;
+  color: white;
+  display: grid;
+  place-items: center;
+}
+.committee-card h2 {
+  font-size: 15px;
+}
+.permission-tags {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  min-height: 57px;
+  align-content: start;
+  margin-top: 15px;
+  margin-bottom: 10px;
+}
+.permission-tags > span {
+  background: #f4f6f9;
+  border: 1px solid #e9edf2;
+  padding: 2px 9px;
+  font-size: 10px;
+  border-radius: 4px;
+  color: var(--muted);
+}
+.committee-card .text-link {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  width: 100%;
+  justify-content: space-between;
+}
+.calendar-controls {
+  display: flex;
+  gap: 8px;
+}
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.calendar-weekday {
+  background: #f8fafc;
+  text-align: center;
+  font-size: 11px;
+  padding: 13px 5px;
+  border-block: 1px solid var(--line);
+  color: #7f8b9d;
+}
+.calendar-day {
+  min-height: 110px;
+  border-left: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.calendar-day:nth-child(7n) {
+  border-left: 0;
+}
+.calendar-day.outside {
+  background: #fafbfd;
+}
+.day-number {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  font-size: 12px;
+}
+.calendar-day.today .day-number {
+  background: var(--red);
+  color: white;
+  border-radius: 50%;
+}
+.calendar-day button {
+  text-align: right;
+  font-size: 9px;
+  padding: 4px 6px;
+  color: var(--red);
+  background: #faeef0;
+  border-radius: 4px;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+}
+.calendar-agenda {
+  margin-top: 20px;
+}
+.calendar-agenda > .agenda-item {
+  padding-inline: 22px;
+}
+.count-badge {
+  font-size: 11px;
+  margin-right: 7px;
+  color: var(--muted);
+  background: #f2f5f9;
+  border-radius: 5px;
+  padding: 2px 7px;
+}
