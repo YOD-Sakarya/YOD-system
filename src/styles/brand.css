@@ -19,7 +19,7 @@
   letter-spacing: -1px;
 }
 .brand strong span {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 550;
   letter-spacing: 0;
   border-right: 1px solid #d6dce4;
@@ -27,7 +27,7 @@
 }
 .brand small {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
 }
 .brand.compact {
   gap: 9px;
@@ -37,14 +37,14 @@
   height: 43px;
 }
 .brand.compact strong {
-  font-size: 17px;
+  font-size: 20px;
   gap: 8px;
 }
 .brand.compact strong span {
-  font-size: 10px;
+  font-size: 12px;
   padding-right: 8px;
 }
 .brand.compact small {
-  font-size: 8px;
+  font-size: 11px;
   white-space: nowrap;
 }

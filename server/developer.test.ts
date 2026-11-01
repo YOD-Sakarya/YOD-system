@@ -4,7 +4,7 @@ import { once } from 'node:events';
 import jwt from 'jsonwebtoken';
 import { createApp } from './app.js';
 import { config } from './config.js';
-import type { query } from './db.js';
+import type { query, transaction } from './db.js';
 import {
   canDelete,
   canEditDocument,
@@ -26,12 +26,20 @@ const cookieFor = (actor: Actor) =>
     expiresIn: '1m',
   });
 
-async function withActor(actor: Actor, run: (base: string) => Promise<void>, handler?: (sql: string) => unknown[]) {
+async function withActor(
+  actor: Actor,
+  run: (base: string) => Promise<void>,
+  handler?: (sql: string) => unknown[],
+  tx?: typeof transaction,
+) {
   const database = (async (sql: string) => {
     if (sql.includes('WHERE u."UserId"=$1')) return [{ ...actor, passwordHash: storedHash }];
     return handler ? handler(sql) : [];
   }) as unknown as typeof query;
-  const server = createApp({ authProvider: 'legacy', query: database }).listen(0, '127.0.0.1');
+  const server = createApp({ authProvider: 'legacy', query: database, ...(tx ? { transaction: tx } : {}) }).listen(
+    0,
+    '127.0.0.1',
+  );
   await once(server, 'listening');
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('Missing server address');
@@ -58,6 +66,7 @@ test('user administration, cycle creation and storage are closed to non-develope
       ['PUT', '/api/users/5'],
       ['GET', '/api/storage'],
       ['POST', '/api/cycles'],
+      ['DELETE', '/api/cycles/1'],
     ]) {
       const response = await fetch(base + path, { method, headers, body: method === 'GET' ? undefined : '{}' });
       assert.equal(response.status, 403, `${method} ${path}`);
@@ -104,4 +113,38 @@ test('storage levels warn at 75%, go critical at 90% and are full at 100%', () =
   assert.equal(usageLevel(100), 'full');
   assert.deepEqual(toUsage(50, 200), { usedBytes: 50, limitBytes: 200, percent: 25, level: 'ok' });
   assert.equal(toUsage(10, 0).percent, 0);
+});
+
+test('deleting a year needs the exact year name and never touches data otherwise', async () => {
+  const statements: string[] = [];
+  const fakeTransaction = (async work =>
+    work({
+      query: async (sql: string) => {
+        statements.push(sql);
+        if (sql.includes('FROM "Cycles" WHERE "CycleId"=$1 FOR UPDATE'))
+          return { rows: [{ Name: '2025/2026', IsCurrent: false }] };
+        return { rows: [], rowCount: 0 };
+      },
+    } as never)) as typeof transaction;
+  await withActor(
+    developer,
+    async base => {
+      const headers = { Cookie: cookieFor(developer), Origin: base, 'Content-Type': 'application/json' };
+      const wrong = await fetch(base + '/api/cycles/1', {
+        method: 'DELETE',
+        headers,
+        body: JSON.stringify({ confirm: '2025' }),
+      });
+      assert.equal(wrong.status, 400);
+      assert.equal(
+        statements.some(sql => sql.startsWith('DELETE')),
+        false,
+        'nothing deleted on a wrong confirmation',
+      );
+      const missing = await fetch(base + '/api/cycles/1', { method: 'DELETE', headers, body: '{}' });
+      assert.equal(missing.status, 400);
+    },
+    undefined,
+    fakeTransaction,
+  );
 });

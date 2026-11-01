@@ -10,25 +10,19 @@ import type { Data, User, VoteSession } from '../types';
 /** Vote sessions grouped by open/closed; only vote managers see the "new session" button. */
 export function VotesPage({
   data,
-  query,
   user,
   onCreate,
   readOnly = false,
   onSelect,
 }: {
   data: Data;
-  query: string;
   user: User;
   onCreate: () => void;
   readOnly?: boolean;
   onSelect: (s: VoteSession) => void;
 }) {
   const [filter, setFilter] = useState('all');
-  const sessions = data.votes.filter(
-    s =>
-      `${s.title} ${s.description}`.includes(query) &&
-      (filter === 'all' || (filter === 'open' ? isOpen(s) : !isOpen(s))),
-  );
+  const sessions = data.votes.filter(s => filter === 'all' || (filter === 'open' ? isOpen(s) : !isOpen(s)));
   return (
     <>
       <PageHeading

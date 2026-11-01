@@ -80,3 +80,37 @@ export async function sendDocument(res: Response, doc: { FilePath: string; Title
       .pipe(res);
   else res.end();
 }
+
+/**
+ * Permanently removes uploaded files of this account from Cloudinary (used when a whole year is deleted).
+ * Best effort: files that are already gone count as removed, other failures are reported, never thrown.
+ */
+export async function deleteCloudFiles(urls: string[]) {
+  const publicIds: string[] = [];
+  for (const raw of urls) {
+    try {
+      const url = new URL(raw);
+      if (url.hostname !== 'res.cloudinary.com' || !url.pathname.startsWith(`/${config.cloud.cloud_name}/`)) continue;
+      const match = url.pathname.match(SIGNED_URL_PATH);
+      if (match) publicIds.push(decodeURIComponent(match[1]));
+    } catch {
+      // Not a URL (legacy local path): nothing to remove remotely.
+    }
+  }
+  let removed = 0;
+  let failed = 0;
+  // The admin API deletes up to 100 resources per call.
+  for (let i = 0; i < publicIds.length; i += 100) {
+    const batch = publicIds.slice(i, i + 100);
+    try {
+      const result = await cloudinary.api.delete_resources(batch, { resource_type: 'raw', invalidate: true });
+      for (const outcome of Object.values(result.deleted ?? {})) {
+        if (outcome === 'deleted' || outcome === 'not_found') removed++;
+        else failed++;
+      }
+    } catch {
+      failed += batch.length;
+    }
+  }
+  return { removed, failed };
+}

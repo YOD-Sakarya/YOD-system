@@ -147,7 +147,7 @@ test('malformed document filters cannot reach SQL, and valid filters stay parame
       assert.equal(calls.length, 0);
       const valid = await fetch(base + '/api/documents?roleId=7', { headers });
       assert.equal(valid.status, 200);
-      assert.deepEqual(calls, [[7]]);
+      assert.deepEqual(calls, [[7, false]]);
     },
     async (sql, values) => {
       if (sql.includes('AS reviews')) {
@@ -158,15 +158,12 @@ test('malformed document filters cannot reach SQL, and valid filters stay parame
     },
   );
 });
-test('registration ignores supplied leadership role and writes only a salted observer account', async () => {
-  const inserts: { sql: string; values: unknown[] }[] = [];
-  const fakeTransaction = (async work =>
-    work({
-      query: async (sql: string, values: unknown[] = []) => {
-        if (sql.includes('INSERT INTO')) inserts.push({ sql, values });
-        return { rows: [], rowCount: 0 };
-      },
-    } as never)) as typeof transaction;
+test('self-registration is closed and writes nothing', async () => {
+  let wrote = false;
+  const fakeTransaction = (async work => {
+    wrote = true;
+    return work({} as never);
+  }) as typeof transaction;
   await withServer(
     async base => {
       const response = await fetch(base + '/api/auth/register', {
@@ -181,11 +178,8 @@ test('registration ignores supplied leadership role and writes only a salted obs
           roleId: 1,
         }),
       });
-      assert.equal(response.status, 201);
-      assert.equal(inserts.length, 1);
-      assert.match(inserts[0].sql, /VALUES \(10,/);
-      assert.match(String(inserts[0].values[4]), /^scrypt:/);
-      assert.notEqual(inserts[0].values[4], 'a long password');
+      assert.equal(response.status, 403);
+      assert.equal(wrote, false);
     },
     undefined,
     fakeTransaction,

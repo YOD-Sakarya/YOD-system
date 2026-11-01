@@ -9,7 +9,7 @@
     "dev:server": "tsx watch server/index.ts",
     "build": "tsc --noEmit && vite build",
     "start": "tsx server/index.ts",
-    "test": "tsx --import ./server/test-setup.ts --test server/*.test.ts",
+    "test": "tsx --import ./server/test-setup.ts --test server/*.test.ts src/lib/*.test.ts",
     "check:db": "tsx server/check-db.ts",
     "db:upgrade": "tsx server/upgrade-schema.ts",
     "create-developer": "tsx server/create-developer.ts",

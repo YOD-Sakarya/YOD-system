@@ -12,7 +12,7 @@
   --canvas: #f5f7fa;
   --white: #fff;
   --green: #23735c;
-  font-size: 14px;
+  font-size: 17px;
   line-height: 1.7;
 }
 * {
@@ -91,20 +91,20 @@ h1 {
   letter-spacing: -0.8px;
 }
 h2 {
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 700;
 }
 h3 {
-  font-size: 15px;
+  font-size: 18px;
 }
 small {
-  font-size: 11px;
+  font-size: 13px;
 }
 .muted {
   color: var(--muted);
 }
 .small-text {
-  font-size: 12px;
+  font-size: 14px;
 }
 .nowrap {
   white-space: nowrap;

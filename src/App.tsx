@@ -9,6 +9,7 @@ import { BootScreen } from './components/layout/BootScreen';
 import { ArchiveBanner } from './components/layout/ArchiveBanner';
 import { CycleSwitcher } from './components/layout/CycleSwitcher';
 import { PreviewBanner } from './components/layout/PreviewBanner';
+import { SearchBox } from './components/search/SearchBox';
 import { Sidebar } from './components/layout/Sidebar';
 import { StorageAlert } from './components/layout/StorageAlert';
 import { Toast } from './components/layout/Toast';
@@ -21,11 +22,13 @@ import { useCurrentUser } from './hooks/useCurrentUser';
 import { useDialogs } from './hooks/useDialogs';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useToast } from './hooks/useToast';
+import { useManagedUsers } from './hooks/useManagedUsers';
 import { useStorageUsage } from './hooks/useStorageUsage';
 import { useWorkspaceData } from './hooks/useWorkspaceData';
 import { api } from './lib/api';
 import { signOutNeon } from './lib/auth';
-import { isDeveloper } from './lib/roles';
+import { isCommitteeRole, isDeveloper } from './lib/roles';
+import { buildSearchIndex, type SearchAction } from './lib/search';
 import type { Data, User } from './types';
 import { WorkspaceRoutes } from './WorkspaceRoutes';
 
@@ -38,7 +41,6 @@ const PENDING_STATUS = 'قيد المراجعة';
 export default function App() {
   const [error, setError] = useState('');
   const [preview, setPreview] = useState(false);
-  const [query, setQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const mobile = useMediaQuery('(max-width: 850px)');
   const { user, setUser, checking } = useCurrentUser(setError);
@@ -67,6 +69,33 @@ export default function App() {
   const developer = !!user && isDeveloper(user) && !preview;
   const storage = useStorageUsage(developer);
 
+  // The search covers every year (not just the one being browsed); the developer can also find people.
+  const managedUsers = useManagedUsers(developer);
+  const searchIndex = useMemo(
+    () =>
+      buildSearchIndex({
+        documents: workspace.data.documents,
+        votes: workspace.data.votes,
+        cycles,
+        roles: workspace.data.catalog.roles,
+        pages: (developer ? [...navigation, adminNavigation] : navigation).map(({ to, label }) => ({ to, label })),
+        users: developer ? managedUsers : undefined,
+        isCommittee: isCommitteeRole,
+      }),
+    [workspace.data, cycles, developer, managedUsers],
+  );
+  /** Opening a result from another year switches the page to that year so its read-only rules apply. */
+  const openSearchResult = (action: SearchAction) => {
+    if (action.type === 'path') navigate(action.to);
+    else if (action.type === 'document') {
+      setChosenCycleId(action.document.cycleId);
+      dialogs.viewDocument(action.document);
+    } else {
+      setChosenCycleId(action.session.cycleId);
+      dialogs.viewVote(action.session);
+    }
+  };
+
   // api() raises this event on any 401 outside the login endpoints: drop all session-bound state.
   useEffect(() => {
     const onExpired = () => {
@@ -82,7 +111,6 @@ export default function App() {
   // Navigating clears the mobile menu and the workspace search.
   useEffect(() => {
     setSidebarOpen(false);
-    setQuery('');
   }, [location.pathname, location.search]);
 
   /** Shared "saved" handler for every dialog: close them all, confirm, and refresh the data. */
@@ -157,10 +185,15 @@ export default function App() {
         <Topbar
           title={title}
           user={user}
-          query={query}
           sidebarOpen={sidebarOpen}
-          onQueryChange={setQuery}
           onOpenSidebar={() => setSidebarOpen(true)}
+          search={
+            <SearchBox
+              index={searchIndex}
+              onSelect={openSearchResult}
+              onSeeAll={text => navigate(`/documents?q=${encodeURIComponent(text)}`)}
+            />
+          }
           actions={
             <>
               {developer && <StorageAlert report={storage.report} />}
@@ -193,7 +226,6 @@ export default function App() {
             onCyclesChanged={workspace.reload}
             data={data}
             user={user}
-            query={query}
             loading={loading}
             onUpload={dialogs.openUpload}
             onCreateSession={dialogs.openSession}

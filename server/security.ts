@@ -16,12 +16,45 @@ export const canDelete = isDeveloper;
  */
 export const sessionVersion = (passwordHash: string) =>
   createHash('sha256').update(passwordHash).digest('hex').slice(0, 16);
-export function reviewStatus(reviews: { role: number; decision: string }[]) {
-  if (![1, 3, 4].every(role => reviews.some(review => review.role === role))) return 'قيد المراجعة';
-  return reviews.filter(review => [1, 3, 4].includes(review.role)).every(review => review.decision === 'مقبول')
-    ? 'مقبول'
+/** Oversight committee: chair (10), deputy chair (12) and rapporteur (13). */
+export const OVERSIGHT_ROLE_IDS = [10, 12, 13];
+export const PROPOSAL_TYPE_ID = 1;
+export const STATUS_APPROVED = 'مقبول';
+export const isOversightRole = (roleId: number) => OVERSIGHT_ROLE_IDS.includes(roleId);
+
+/**
+ * Roles whose acceptance a document needs before it is final:
+ * - proposals: president, secretary general and financial officer;
+ * - documents uploaded by an oversight member: the other two oversight members
+ *   (the uploader's own acceptance is implied, so all three have accepted);
+ * - everything else needs no review.
+ */
+export function requiredReviewerRoles(docTypeId: number, ownerRoleId: number): number[] {
+  if (docTypeId === PROPOSAL_TYPE_ID) return [1, 3, 4];
+  if (isOversightRole(ownerRoleId)) return OVERSIGHT_ROLE_IDS.filter(role => role !== ownerRoleId);
+  return [];
+}
+
+/** Roles that review something (proposals or oversight documents); everyone else is turned away before any lookup. */
+export const canReviewAny = (user: Actor) => canReview(user) || isOversightRole(user.roleId);
+
+/** Pending until every required role has reviewed; accepted only if all of them accepted. */
+export function reviewStatus(reviews: { role: number; decision: string }[], required: number[] = [1, 3, 4]) {
+  if (!required.every(role => reviews.some(review => review.role === role))) return 'قيد المراجعة';
+  return reviews.filter(review => required.includes(review.role)).every(review => review.decision === STATUS_APPROVED)
+    ? STATUS_APPROVED
     : 'مرفوض';
 }
+
+/**
+ * Documents uploaded by oversight members stay private to the oversight committee (and the developer)
+ * until all three have accepted them; after that everyone can see them.
+ */
+export const isRestrictedDocument = (ownerRoleId: number, status: string) =>
+  isOversightRole(ownerRoleId) && status !== STATUS_APPROVED;
+export const canSeeRestrictedDocuments = (user: Actor) => isDeveloper(user) || isOversightRole(user.roleId);
+export const canViewDocument = (user: Actor, ownerRoleId: number, status: string) =>
+  !isRestrictedDocument(ownerRoleId, status) || canSeeRestrictedDocuments(user);
 export function voteDecision(options: { text: string; count: number }[]) {
   const ranked = [...options].sort((a, b) => b.count - a.count);
   if (!ranked[0]?.count) return 'لا يوجد قرار';

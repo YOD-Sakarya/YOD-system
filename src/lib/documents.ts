@@ -1,5 +1,6 @@
 import type { Document } from '../types';
+import { matchesText } from './search';
 
-/** Case-insensitive search across title, committee, type and owner. */
+/** Search across title, committee, type, owner and status (Arabic spelling variants are ignored). */
 export const matchesDocument = (d: Document, query: string) =>
-  `${d.title} ${d.roleName} ${d.typeName} ${d.ownerName}`.toLowerCase().includes(query.toLowerCase());
+  matchesText(`${d.title} ${d.roleName} ${d.typeName} ${d.ownerName} ${d.status}`, query);

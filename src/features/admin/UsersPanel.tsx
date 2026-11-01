@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
-import { LoaderCircle, Pencil, Plus } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { LoaderCircle, Pencil, Plus, Search } from 'lucide-react';
 import { Empty } from '../../components/ui/Empty';
 import { api } from '../../lib/api';
 import { number } from '../../lib/format';
+import { matchesText } from '../../lib/search';
 import type { Catalog, ManagedUser } from '../../types';
 import { UserForm } from './UserForm';
 
 /** All accounts with their role and document count; the developer adds users or hands a seat to someone new. */
-export function UsersPanel({ roles, query }: { roles: Catalog['roles']; query: string }) {
+export function UsersPanel({ roles }: { roles: Catalog['roles'] }) {
   const [users, setUsers] = useState<ManagedUser[] | null>(null);
   const [error, setError] = useState('');
+  // The workspace search opens this tab with ?q=<name>.
+  const [params] = useSearchParams();
+  const [filter, setFilter] = useState(params.get('q') ?? '');
   // `null` closed, `'new'` creating, otherwise the account being edited.
   const [editing, setEditing] = useState<ManagedUser | 'new' | null>(null);
 
@@ -26,7 +31,7 @@ export function UsersPanel({ roles, query }: { roles: Catalog['roles']; query: s
   }, [load]);
 
   const visible = (users || []).filter(u =>
-    `${u.fullName} ${u.username} ${u.email} ${u.roleName}`.toLowerCase().includes(query.toLowerCase()),
+    matchesText(`${u.fullName} ${u.username} ${u.email} ${u.roleName}`, filter),
   );
 
   return (
@@ -36,6 +41,15 @@ export function UsersPanel({ roles, query }: { roles: Catalog['roles']; query: s
           <h2>المستخدمون</h2>
           <p>أضف مستخدمًا جديدًا أو سلّم المقعد لشخص جديد في أي وقت.</p>
         </div>
+        <label className="table-search">
+          <Search size={17} />
+          <input
+            aria-label="تصفية المستخدمين"
+            placeholder="ابحث بالاسم أو الدور…"
+            value={filter}
+            onChange={event => setFilter(event.target.value)}
+          />
+        </label>
         <button className="button primary" onClick={() => setEditing('new')}>
           <Plus size={18} />
           إضافة مستخدم

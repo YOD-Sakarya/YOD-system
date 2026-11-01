@@ -5,13 +5,12 @@ import { DocumentTable } from '../components/documents/DocumentTable';
 import { PageHeading } from '../components/ui/PageHeading';
 import { matchesDocument } from '../lib/documents';
 import { number } from '../lib/format';
-import { PROPOSAL_TYPE_ID, isCommitteeRole } from '../lib/roles';
+import { isCommitteeRole, reviewerRolesFor } from '../lib/roles';
 import type { Data, Document } from '../types';
 
 /** Document library with status/type/committee/quarter filters and pagination; `reviews` shows proposals only. */
 export function DocumentsPage({
   data,
-  query,
   loading,
   reviews = false,
   onUpload,
@@ -19,7 +18,6 @@ export function DocumentsPage({
   onDocument,
 }: {
   data: Data;
-  query: string;
   loading: boolean;
   reviews?: boolean;
   onUpload: () => void;
@@ -32,17 +30,17 @@ export function DocumentsPage({
   const [status, setStatus] = useState(''),
     [type, setType] = useState(''),
     [quarter, setQuarter] = useState(''),
-    [search, setSearch] = useState(''),
+    // The workspace search sends "show all results" here as ?q=.
+    [search, setSearch] = useState(() => new URLSearchParams(location.search).get('q') ?? ''),
     [page, setPage] = useState(1);
-  useEffect(() => setPage(1), [status, type, quarter, search, query, role, reviews]);
+  useEffect(() => setPage(1), [status, type, quarter, search, role, reviews]);
   const docs = data.documents.filter(
     d =>
-      (!reviews || d.docTypeId === PROPOSAL_TYPE_ID) &&
+      (!reviews || reviewerRolesFor(d).length > 0) &&
       (!role || d.roleId === Number(role)) &&
       (!status || d.status === status) &&
       (!type || d.docTypeId === Number(type)) &&
       (!quarter || d.quarterId === Number(quarter)) &&
-      matchesDocument(d, query) &&
       matchesDocument(d, search),
   );
   const roleName = data.catalog.roles.find(r => String(r.roleId) === role)?.roleName;
@@ -79,7 +77,7 @@ export function DocumentsPage({
         <div className="document-tabs">
           <button className={!status ? 'active' : ''} onClick={() => setStatus('')}>
             جميع {reviews ? 'التصورات' : 'المستندات'}
-            <span>{number(data.documents.filter(d => !reviews || d.docTypeId === PROPOSAL_TYPE_ID).length)}</span>
+            <span>{number(data.documents.filter(d => !reviews || reviewerRolesFor(d).length > 0).length)}</span>
           </button>
           <button className={status === 'قيد المراجعة' ? 'active' : ''} onClick={() => setStatus('قيد المراجعة')}>
             قيد المراجعة

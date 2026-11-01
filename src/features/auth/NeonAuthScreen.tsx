@@ -108,7 +108,7 @@ export function NeonAuthScreen({ onLogin, onPreview, initialError }: Omit<AuthEn
           throw new Error(
             'تعذر إنشاء الحساب. تحقق من بريدك وكلمة المرور، أو استخدم استعادة كلمة المرور إذا كان لديك حساب.',
           );
-        setNotice('تحقق من بريدك الإلكتروني لتأكيد الحساب، ثم سجّل الدخول. يحصل الحساب الجديد على دور مراقب.');
+        setNotice('تحقق من بريدك الإلكتروني لتأكيد الحساب، ثم سجّل الدخول. يجب أن يكون بريدك مسجّلًا لدى المطوّر.');
       } else {
         const result = await auth.signIn.email({ email: String(values.email), password: String(values.password) });
         if (result.error)
@@ -281,12 +281,12 @@ export function NeonAuthScreen({ onLogin, onPreview, initialError }: Omit<AuthEn
           )}
           {mode === 'login' || mode === 'register' ? (
             <p className="login-switch">
-              {mode === 'register' ? 'لديك حساب بالفعل؟' : 'ليس لديك حساب؟'}
+              {mode === 'register' ? 'لديك حساب بالفعل؟' : 'أول مرة هنا؟'}
               <button
                 disabled={busy}
                 onClick={() => changeMode(mode === 'register' ? '/auth/sign-in' : '/auth/sign-up')}
               >
-                {mode === 'register' ? 'تسجيل الدخول' : 'إنشاء حساب مراقب'}
+                {mode === 'register' ? 'تسجيل الدخول' : 'تفعيل حسابي'}
               </button>
             </p>
           ) : (

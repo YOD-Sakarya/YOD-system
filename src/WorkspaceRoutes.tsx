@@ -12,7 +12,6 @@ type Props = {
   /** Data already narrowed to the cycle being viewed. */
   data: Data;
   user: User;
-  query: string;
   loading: boolean;
   /** Browsing a finished cycle: hide the create buttons. */
   readOnly: boolean;
@@ -28,7 +27,6 @@ type Props = {
 export function WorkspaceRoutes({
   data,
   user,
-  query,
   loading,
   readOnly,
   storage,
@@ -46,7 +44,6 @@ export function WorkspaceRoutes({
           <OverviewPage
             data={data}
             user={user}
-            query={query}
             loading={loading}
             readOnly={readOnly}
             onUpload={onUpload}
@@ -62,7 +59,6 @@ export function WorkspaceRoutes({
           <DocumentsPage
             key="documents"
             data={data}
-            query={query}
             loading={loading}
             readOnly={readOnly}
             onUpload={onUpload}
@@ -76,7 +72,6 @@ export function WorkspaceRoutes({
           <DocumentsPage
             key="reviews"
             data={data}
-            query={query}
             loading={loading}
             reviews
             readOnly={readOnly}
@@ -87,24 +82,12 @@ export function WorkspaceRoutes({
       />
       <Route
         path="/votes"
-        element={
-          <VotesPage
-            data={data}
-            query={query}
-            user={user}
-            readOnly={readOnly}
-            onCreate={onCreateSession}
-            onSelect={onVote}
-          />
-        }
+        element={<VotesPage data={data} user={user} readOnly={readOnly} onCreate={onCreateSession} onSelect={onVote} />}
       />
-      <Route path="/calendar" element={<CalendarPage data={data} query={query} onDocument={onDocument} />} />
-      <Route path="/committees" element={<CommitteesPage data={data} query={query} />} />
+      <Route path="/calendar" element={<CalendarPage data={data} onDocument={onDocument} />} />
+      <Route path="/committees" element={<CommitteesPage data={data} />} />
       {isDeveloper(user) && (
-        <Route
-          path="/admin"
-          element={<AdminPage data={data} query={query} storage={storage} onCyclesChanged={onCyclesChanged} />}
-        />
+        <Route path="/admin" element={<AdminPage data={data} storage={storage} onCyclesChanged={onCyclesChanged} />} />
       )}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -6,7 +6,7 @@ import { isDeveloper } from '../lib/roles';
 import type { Data } from '../types';
 
 /** Committees with their document counts and which document types each may create. */
-export function CommitteesPage({ data, query }: { data: Data; query: string }) {
+export function CommitteesPage({ data }: { data: Data }) {
   return (
     <>
       <PageHeading
@@ -15,7 +15,7 @@ export function CommitteesPage({ data, query }: { data: Data; query: string }) {
       />
       <div className="committees-grid">
         {data.catalog.roles
-          .filter(r => !isDeveloper(r) && r.roleName.includes(query))
+          .filter(r => !isDeveloper(r))
           .map(r => (
             <section className="panel committee-card" key={r.roleId}>
               <div className="committee-card-top">

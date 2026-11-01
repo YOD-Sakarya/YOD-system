@@ -35,11 +35,3 @@ export const loginSchema = z.object({
   username: z.string().trim().min(1).max(100),
   password: z.string().min(1).max(256),
 });
-
-export const registerSchema = z.object({
-  fullName: z.string().trim().min(3).max(150),
-  username: z.string().trim().min(3).max(100),
-  email: z.email(),
-  phoneWhatsapp: z.string().max(30),
-  password: z.string().min(10).max(256),
-});

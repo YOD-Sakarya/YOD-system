@@ -19,13 +19,13 @@
     font-size: 42px;
   }
   .document-title strong {
-    font-size: 12px;
+    font-size: 14px;
   }
   .document-title small {
-    font-size: 9px;
+    font-size: 11px;
   }
   .agenda-item > span > strong {
-    font-size: 11px;
+    font-size: 13px;
   }
   .agenda-item {
     padding-block: 20px;
@@ -45,7 +45,7 @@
     gap: 7px;
   }
   .brand.compact strong span {
-    font-size: 9px;
+    font-size: 11px;
   }
   .main-content {
     padding-inline: 24px;
@@ -74,7 +74,7 @@
     font-size: 30px;
   }
   .stat small {
-    font-size: 8px;
+    font-size: 11px;
   }
   .review-strip {
     padding: 18px;
@@ -103,7 +103,7 @@
     font-size: 36px;
   }
   .story-content > p {
-    font-size: 12px;
+    font-size: 14px;
   }
 }
 @media (max-width: 850px) {
@@ -134,11 +134,34 @@
     padding-right: 20px;
   }
   .sidebar .brand.compact strong span {
-    font-size: 10px;
+    font-size: 12px;
   }
+  /* Two-row top bar: menu + title + avatar, then year switcher, storage and a full-width search. */
   .topbar {
-    height: 64px;
-    padding-inline: 20px;
+    height: auto;
+    min-height: 64px;
+    flex-wrap: wrap;
+    padding: 10px 20px;
+    gap: 10px 14px;
+  }
+  .topbar-actions {
+    display: contents;
+  }
+  .breadcrumb {
+    order: 1;
+    flex: 1;
+    min-width: 0;
+  }
+  .topbar .avatar {
+    order: 2;
+  }
+  .cycle-switcher,
+  .storage-alert {
+    order: 3;
+  }
+  .search-box {
+    order: 4;
+    flex: 1 1 100%;
   }
   .breadcrumb {
     gap: 8px;
@@ -150,7 +173,7 @@
     display: none;
   }
   .global-search {
-    width: 210px;
+    width: 100%;
   }
   .global-search kbd {
     display: none;
@@ -171,10 +194,10 @@
     padding: 18px;
   }
   .stat strong {
-    font-size: 10px;
+    font-size: 12px;
   }
   .stat small {
-    font-size: 8px;
+    font-size: 11px;
   }
   .login-story {
     padding: 10%;
@@ -183,16 +206,16 @@
     font-size: 30px;
   }
   .story-content > p {
-    font-size: 11px;
+    font-size: 13px;
   }
   .story-features {
-    font-size: 10px;
+    font-size: 12px;
   }
   .brand strong {
-    font-size: 19px;
+    font-size: 23px;
   }
   .brand strong span {
-    font-size: 11px;
+    font-size: 13px;
   }
   .brand img {
     width: 47px;
@@ -202,7 +225,7 @@
     font-size: 28px;
   }
   .login-form-wrap > p {
-    font-size: 11px;
+    font-size: 13px;
   }
   .login-form-side {
     padding: 28px 7%;
@@ -212,26 +235,25 @@
     padding: 6px;
   }
   .calendar-day button {
-    font-size: 8px;
+    font-size: 11px;
   }
   .calendar-controls {
     gap: 4px;
   }
   .calendar-controls .button {
-    font-size: 9px;
+    font-size: 11px;
     padding: 5px 9px;
   }
 }
 @media (max-width: 600px) {
   :root {
-    font-size: 13px;
+    font-size: 16px;
   }
   .main-content {
     padding: 22px 15px 0;
   }
   .topbar {
-    padding-inline: 12px;
-    gap: 8px;
+    padding: 10px 12px;
   }
   .breadcrumb > span {
     display: none;
@@ -240,14 +262,26 @@
     display: none;
   }
   .breadcrumb strong {
-    font-size: 11px;
+    font-size: 13px;
   }
   .global-search {
-    width: 160px;
-    gap: 5px;
+    width: 100%;
+    gap: 8px;
   }
-  .global-search input {
-    font-size: 9px;
+  /* 16px keeps iOS from zooming into the field on focus. */
+  .global-search input,
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  /* Comfortable touch targets. */
+  .icon-button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+  .button {
+    min-height: 44px;
   }
   .topbar-actions {
     gap: 8px;
@@ -255,11 +289,11 @@
   .avatar {
     width: 29px;
     height: 29px;
-    font-size: 12px;
+    font-size: 14px;
   }
   .preview-banner {
     padding: 9px 15px;
-    font-size: 9px;
+    font-size: 11px;
     align-items: flex-start;
     gap: 6px;
   }
@@ -267,7 +301,7 @@
     max-width: 210px;
   }
   .preview-banner button {
-    font-size: 9px;
+    font-size: 11px;
     white-space: nowrap;
     gap: 4px;
   }
@@ -275,7 +309,7 @@
     display: none;
   }
   .today-line {
-    font-size: 9px;
+    font-size: 11px;
   }
   .page-heading {
     gap: 10px;
@@ -286,12 +320,12 @@
     font-size: 23px;
   }
   .page-heading p {
-    font-size: 10px;
+    font-size: 12px;
     max-width: 250px;
     margin-top: 5px;
   }
   .page-heading .button {
-    font-size: 10px;
+    font-size: 12px;
     padding: 8px 10px;
     min-height: 36px;
     gap: 5px;
@@ -320,10 +354,10 @@
   }
   .stat strong {
     margin-top: 10px;
-    font-size: 10px;
+    font-size: 12px;
   }
   .stat small {
-    font-size: 8px;
+    font-size: 11px;
   }
   .stat-arrow {
     bottom: 15px;
@@ -337,16 +371,16 @@
     padding: 17px;
   }
   .panel-heading h2 {
-    font-size: 13px;
+    font-size: 16px;
   }
   .panel-heading p {
-    font-size: 9px;
+    font-size: 11px;
   }
   .text-link {
-    font-size: 10px;
+    font-size: 12px;
   }
   .document-table th {
-    font-size: 8px;
+    font-size: 11px;
     padding-inline: 10px;
   }
   .document-table td {
@@ -360,17 +394,17 @@
     gap: 8px;
   }
   .document-title strong {
-    font-size: 10px;
+    font-size: 12px;
     max-width: 190px;
   }
   .document-title small {
-    font-size: 8px;
+    font-size: 11px;
   }
   .document-table .committee-cell {
-    font-size: 8px;
+    font-size: 11px;
   }
   .document-table .status {
-    font-size: 8px;
+    font-size: 11px;
   }
   .document-table th:nth-child(2),
   .document-table td:nth-child(2) {
@@ -381,7 +415,7 @@
     gap: 4px;
   }
   .review-progress small {
-    font-size: 8px;
+    font-size: 11px;
   }
   .review-progress i {
     width: 5px;
@@ -398,7 +432,7 @@
     grid-template-columns: 1fr;
   }
   .agenda-item > span > strong {
-    font-size: 11px;
+    font-size: 13px;
   }
   .agenda-list {
     padding-inline: 18px;
@@ -410,17 +444,17 @@
     padding: 21px;
   }
   .vote-callout h2 {
-    font-size: 17px;
+    font-size: 20px;
   }
   .vote-callout p {
-    font-size: 12px;
+    font-size: 14px;
   }
   .vote-callout .button {
-    font-size: 11px;
+    font-size: 13px;
     min-height: 39px;
   }
   .vote-callout-meta {
-    font-size: 10px;
+    font-size: 12px;
   }
   .review-strip {
     padding: 17px;
@@ -431,18 +465,18 @@
     flex: 1;
   }
   .review-strip h3 {
-    font-size: 11px;
+    font-size: 13px;
   }
   .review-strip p {
-    font-size: 9px;
+    font-size: 11px;
   }
   .review-strip > .button {
     width: 100%;
-    font-size: 10px;
+    font-size: 12px;
   }
   .page-footer {
     margin-top: 23px;
-    font-size: 8px;
+    font-size: 11px;
     flex-wrap: wrap;
   }
   .document-tabs {
@@ -450,17 +484,17 @@
     padding-inline: 17px;
   }
   .document-tabs button {
-    font-size: 10px;
+    font-size: 12px;
   }
   .document-tabs button span {
-    font-size: 8px;
+    font-size: 11px;
   }
   .filters {
     padding: 14px;
     gap: 7px;
   }
   .filters select {
-    font-size: 9px;
+    font-size: 11px;
     max-width: 100%;
     padding-inline: 5px;
   }
@@ -468,19 +502,19 @@
     display: none;
   }
   .table-pagination {
-    font-size: 9px;
+    font-size: 11px;
     padding: 14px;
   }
   .table-pagination > div {
     gap: 9px;
   }
   .small-button {
-    font-size: 9px;
+    font-size: 11px;
     padding-inline: 10px;
   }
   .review-info {
     padding: 13px;
-    font-size: 10px;
+    font-size: 12px;
     align-items: flex-start;
   }
   .ballot-grid {
@@ -491,10 +525,10 @@
     padding: 20px;
   }
   .ballot-card h2 {
-    font-size: 16px;
+    font-size: 19px;
   }
   .segmented button {
-    font-size: 10px;
+    font-size: 12px;
     padding: 6px 14px;
   }
   .committees-grid {
@@ -505,7 +539,7 @@
     padding: 20px;
   }
   .committee-card h2 {
-    font-size: 15px;
+    font-size: 18px;
   }
   .permission-tags {
     min-height: 0;
@@ -525,20 +559,20 @@
     gap: 3px;
   }
   .calendar-day button {
-    font-size: 7px;
+    font-size: 11px;
     padding: 2px;
     line-height: 1.8;
     max-height: 44px;
     overflow: hidden;
   }
   .calendar-weekday {
-    font-size: 8px;
+    font-size: 11px;
     padding: 10px 2px;
   }
   .day-number {
     width: 22px;
     height: 22px;
-    font-size: 10px;
+    font-size: 12px;
   }
   .calendar-agenda .panel-heading {
     padding: 17px;
@@ -560,14 +594,14 @@
     font-size: 31px;
   }
   .login-form-wrap > p {
-    font-size: 11px;
+    font-size: 13px;
   }
   .login-preview {
-    font-size: 9px;
+    font-size: 11px;
   }
   .login-form-side > footer {
     text-align: center;
-    font-size: 9px;
+    font-size: 11px;
   }
   .form-grid {
     grid-template-columns: 1fr;
@@ -579,14 +613,14 @@
     padding: 14px 18px;
   }
   .modal > header h2 {
-    font-size: 14px;
+    font-size: 17px;
   }
   .detail-title {
     gap: 10px;
     flex-wrap: wrap;
   }
   .detail-title h3 {
-    font-size: 16px;
+    font-size: 19px;
   }
   .detail-title > .status {
     margin-right: 59px;
@@ -596,16 +630,16 @@
     padding: 16px;
   }
   .details-grid dd {
-    font-size: 11px;
+    font-size: 13px;
   }
   .details-grid dt {
-    font-size: 9px;
+    font-size: 11px;
   }
   .detail-actions {
     gap: 7px;
   }
   .detail-actions .button {
-    font-size: 10px;
+    font-size: 12px;
     padding: 8px 11px;
     min-height: 35px;
   }
@@ -613,13 +647,13 @@
     gap: 9px;
   }
   .review-row strong {
-    font-size: 10px;
+    font-size: 12px;
   }
   .review-row p {
-    font-size: 10px;
+    font-size: 12px;
   }
   .review-row .status {
-    font-size: 8px;
+    font-size: 11px;
   }
   .review-form {
     padding: 15px;
@@ -627,18 +661,71 @@
   .toast {
     bottom: 16px;
     left: 16px;
-    font-size: 11px;
+    font-size: 13px;
   }
   .option-top {
-    font-size: 11px;
+    font-size: 13px;
   }
   .vote-dialog-title {
-    font-size: 19px;
+    font-size: 23px;
   }
   .login-form-wrap .form-grid {
     grid-template-columns: 1fr;
   }
 }
+/* Phones: document rows become cards instead of a sideways-scrolling table. */
+@media (max-width: 600px) {
+  .table-scroll {
+    overflow: visible;
+  }
+  .document-table.cards,
+  .document-table.cards tbody {
+    display: block;
+    white-space: normal;
+  }
+  .document-table.cards thead {
+    display: none;
+  }
+  .document-table.cards tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .document-table.cards td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+  .document-table.cards td.col-title {
+    grid-column: 1 / -1;
+  }
+  .document-table.cards .document-title strong {
+    max-width: none;
+    white-space: normal;
+  }
+  .document-table.cards td.col-committee,
+  .document-table.cards td.col-date {
+    grid-column: 1;
+    display: block !important;
+  }
+  .document-table.cards td.col-status {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+  }
+  .document-table.cards td.col-progress {
+    grid-column: 2;
+    justify-self: end;
+  }
+  /* The whole title is already tappable. */
+  .document-table.cards td.col-open {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *:before,

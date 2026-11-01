@@ -27,7 +27,8 @@ export function DocumentTable({
   if (!documents.length) return <Empty />;
   return (
     <div className="table-scroll">
-      <table className="document-table">
+      {/* On phones the "cards" modifier turns each row into a stacked card (see styles/responsive.css). */}
+      <table className="document-table cards">
         <thead>
           <tr>
             <th>المستند</th>
@@ -43,7 +44,7 @@ export function DocumentTable({
         <tbody>
           {documents.map(d => (
             <tr key={d.docId}>
-              <td>
+              <td className="col-title">
                 <button className="document-title" onClick={() => onSelect(d)}>
                   <span className={`file-icon file-${d.docTypeId}`}>
                     <Files size={19} />
@@ -57,20 +58,20 @@ export function DocumentTable({
                   </span>
                 </button>
               </td>
-              <td>
+              <td className="col-committee">
                 <span className="committee-cell">
                   <i className={`committee-dot dot-${d.roleId % 4}`} />
                   {d.roleName}
                 </span>
               </td>
-              {!compact && <td className="nowrap">{date(d.eventDate, { year: 'numeric' })}</td>}
-              <td>
+              {!compact && <td className="nowrap col-date">{date(d.eventDate, { year: 'numeric' })}</td>}
+              <td className="col-status">
                 <Status value={d.status} />
               </td>
-              <td>
+              <td className="col-progress">
                 <ReviewProgress doc={d} />
               </td>
-              <td>
+              <td className="col-open">
                 <button className="icon-button" aria-label={`تفاصيل ${d.title}`} onClick={() => onSelect(d)}>
                   <ChevronLeft size={17} />
                 </button>

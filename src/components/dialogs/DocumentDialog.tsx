@@ -3,7 +3,7 @@ import { Check, Download, FileText, LoaderCircle, Pencil, Trash2 } from 'lucide-
 import { api, json } from '../../lib/api';
 import { getAuthHeaders } from '../../lib/auth';
 import { date } from '../../lib/format';
-import { PROPOSAL_TYPE_ID, REVIEWER_ROLE_IDS, isDeveloper } from '../../lib/roles';
+import { REVIEWER_ROLE_IDS, REVIEWER_TITLES, isDeveloper, reviewerRolesFor } from '../../lib/roles';
 import type { Document, User } from '../../types';
 import { Modal } from '../ui/Modal';
 import { ReviewProgress } from '../ui/ReviewProgress';
@@ -24,6 +24,8 @@ export function DocumentDialog({
     [busy, setBusy] = useState(false),
     [confirm, setConfirm] = useState(false);
   const developer = isDeveloper(user);
+  // Roles that must review this document (proposals: leadership; oversight uploads: the other oversight members).
+  const reviewers = reviewerRolesFor(doc);
   // Finished cycles are read-only for everyone except the developer; only the developer deletes.
   const canEdit =
     (doc.ownerUserId === user.userId || REVIEWER_ROLE_IDS.includes(user.roleId) || developer) &&
@@ -150,19 +152,19 @@ export function DocumentDialog({
             </button>
           </div>
         )}
-        {doc.docTypeId === PROPOSAL_TYPE_ID && (
+        {reviewers.length > 0 && (
           <section className="detail-reviews">
             <div className="section-title">
               <h3>سجل المراجعات</h3>
               <ReviewProgress doc={doc} />
             </div>
-            {REVIEWER_ROLE_IDS.map(roleId => {
+            {reviewers.map(roleId => {
               const r = doc.reviews.find(rv => rv.roleId === roleId);
               return (
                 <div className="review-row" key={roleId}>
                   <span className={`review-check ${r ? 'done' : ''}`}>{r ? <Check size={16} /> : <span />}</span>
                   <div>
-                    <strong>{roleId === 1 ? 'رئيس الهيئة التنفيذية' : roleId === 3 ? 'أمين عام' : 'مسؤول مالي'}</strong>
+                    <strong>{REVIEWER_TITLES[roleId]}</strong>
                     {r ? (
                       <>
                         <small>
@@ -178,7 +180,7 @@ export function DocumentDialog({
                 </div>
               );
             })}
-            {REVIEWER_ROLE_IDS.includes(user.roleId) && !archived && (
+            {reviewers.includes(user.roleId) && !archived && (
               <form className="review-form form-stack" onSubmit={review}>
                 <h3>{myReview ? 'تحديث مراجعتك' : 'أضف مراجعتك'}</h3>
                 <label>

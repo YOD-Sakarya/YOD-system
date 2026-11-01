@@ -27,7 +27,7 @@
   color: var(--muted);
 }
 .usage small {
-  font-size: 11px;
+  font-size: 13px;
 }
 .usage-track {
   display: block;
@@ -55,7 +55,7 @@
   border-radius: 8px;
   background: #fff;
   color: var(--usage-color);
-  font-size: 11px;
+  font-size: 13px;
   white-space: nowrap;
 }
 .storage-alert.usage-warning {
@@ -99,4 +99,29 @@
   .storage-alert .usage-track {
     display: none;
   }
+}
+
+/* Delete-year warning. */
+.danger-zone {
+  display: flex;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid #f0b8bd;
+  border-radius: 10px;
+  background: #fdf1f2;
+  color: #7d1f29;
+}
+.danger-zone svg {
+  flex: none;
+  margin-top: 2px;
+}
+.danger-zone ul {
+  margin: 8px 0 0;
+  padding-inline-start: 18px;
+  display: grid;
+  gap: 4px;
+}
+.danger-icon:hover:not(:disabled) {
+  color: var(--red);
+  background: #fdf1f2;
 }

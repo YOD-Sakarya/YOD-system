@@ -7,7 +7,7 @@
   border: 1px solid transparent;
   padding: 10px 17px;
   border-radius: 7px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 650;
   min-height: 42px;
   white-space: nowrap;
@@ -44,7 +44,7 @@
 .small-button {
   min-height: 32px;
   padding: 5px 12px;
-  font-size: 11px;
+  font-size: 13px;
 }
 .icon-button {
   display: inline-flex;
@@ -66,7 +66,7 @@
   align-items: center;
   gap: 5px;
   color: var(--red);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 650;
 }
 .text-link:hover {

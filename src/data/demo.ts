@@ -11,7 +11,7 @@ const roles = [
   'مسؤول أنشطة',
   'مسؤولة طالبات',
   'مسؤول إعلامي',
-  'مراقب',
+  'رئيس لجنة الرقابة',
 ].map((roleName, i) => ({ roleId: i + 1, roleName }));
 const types = ['تصور', 'تقرير', 'بيان', 'محضر', 'خطة'].map((typeName, i) => ({ docTypeId: i + 1, typeName }));
 const quarters = ['الربع الأول', 'الربع الثاني', 'الربع الثالث', 'الربع الرابع'].map((quarterName, i) => ({
@@ -31,7 +31,7 @@ const permissionTypes = [
   [1, 2, 5],
   [1, 2, 5],
   [1, 2, 5],
-  [],
+  [2, 3, 4, 5],
 ];
 export const demoData: Data = {
   catalog: {

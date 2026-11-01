@@ -251,3 +251,14 @@ DEV_USERNAME=... DEV_EMAIL=... DEV_FULLNAME=... DEV_PASSWORD=... npm run create-
 Handing a seat to a new person: edit the user, change name/username/email and set a new password. The old password
 and any open sessions stop working. In Neon-auth mode the previous person's identity is unlinked, and the new person
 signs up with the new email.
+
+## Oversight committee
+
+The old observer role is now the oversight committee: **رئيس لجنة الرقابة** (10), **نائب رئيس لجنة الرقابة** (12)
+and **المقرر** (13). They can view documents like any member and upload reports, statements, minutes and plans.
+What they upload is private to the three of them (and the developer) until the other two have accepted it; then
+everyone can see it. Assign the three roles from the developer console. Self-registration is closed: the developer
+creates every account.
+
+Deleting a whole year (developer console, "Years") removes its documents, reviews, vote sessions and uploaded files
+after typing the year's name to confirm.

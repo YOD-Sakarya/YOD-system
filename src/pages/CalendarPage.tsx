@@ -2,27 +2,17 @@ import { useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { Empty } from '../components/ui/Empty';
 import { PageHeading } from '../components/ui/PageHeading';
-import { matchesDocument } from '../lib/documents';
 import { date, number } from '../lib/format';
 import type { Data, Document } from '../types';
 
 /** Month grid of document event dates plus an agenda list for the same month. */
-export function CalendarPage({
-  data,
-  query,
-  onDocument,
-}: {
-  data: Data;
-  query: string;
-  onDocument: (d: Document) => void;
-}) {
+export function CalendarPage({ data, onDocument }: { data: Data; onDocument: (d: Document) => void }) {
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const today = new Date(),
     count = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate(),
     offset = month.getDay();
   const docs = data.documents.filter(
     d =>
-      matchesDocument(d, query) &&
       new Date(d.eventDate).getMonth() === month.getMonth() &&
       new Date(d.eventDate).getFullYear() === month.getFullYear(),
   );

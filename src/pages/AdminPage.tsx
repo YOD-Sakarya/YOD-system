@@ -7,7 +7,6 @@ import type { Data, StorageReport } from '../types';
 
 type Props = {
   data: Data;
-  query: string;
   storage: { report: StorageReport | null; error: string; loading: boolean; reload: () => void };
   onCyclesChanged: () => Promise<void>;
 };
@@ -19,7 +18,7 @@ const tabs = [
 ] as const;
 
 /** Developer console: users, yearly cycles and storage. The active tab lives in the URL (?tab=). */
-export function AdminPage({ data, query, storage, onCyclesChanged }: Props) {
+export function AdminPage({ data, storage, onCyclesChanged }: Props) {
   const [params, setParams] = useSearchParams();
   const active = tabs.find(tab => tab.id === params.get('tab'))?.id ?? 'users';
   return (
@@ -38,7 +37,7 @@ export function AdminPage({ data, query, storage, onCyclesChanged }: Props) {
           </button>
         ))}
       </div>
-      {active === 'users' && <UsersPanel roles={data.catalog.roles} query={query} />}
+      {active === 'users' && <UsersPanel roles={data.catalog.roles} />}
       {active === 'cycles' && <CyclesPanel cycles={data.cycles} onChanged={onCyclesChanged} />}
       {active === 'storage' && (
         <StoragePanel

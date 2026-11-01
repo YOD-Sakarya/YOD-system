@@ -5,16 +5,14 @@ import { config } from '../config.js';
 import { cookieOptions, JWT_AUDIENCE, JWT_ISSUER, SESSION_COOKIE } from '../http/authenticate.js';
 import type { AppContext } from '../http/context.js';
 import { fail, HttpError } from '../http/errors.js';
-import { type Actor, hashPassword, sessionVersion, verifyPassword } from '../security.js';
-import { loginSchema, registerSchema } from '../schemas.js';
+import { type Actor, sessionVersion, verifyPassword } from '../security.js';
+import { loginSchema } from '../schemas.js';
 
 const SESSION_SECONDS = 24 * 60 * 60;
-/** Role assigned to every self-registered account (observer: read-only). */
-const OBSERVER_ROLE_ID = 10;
 /** Prefix of placeholder hashes for accounts managed by Neon; they can never sign in with a password. */
 const NEON_MANAGED_PREFIX = '!neon-managed:';
 
-/** Endpoints reachable without a session: auth settings, legacy login/registration and logout. */
+/** Endpoints reachable without a session: auth settings, legacy login, closed registration and logout. */
 export function publicAuthRoutes({ query, transaction, authProvider }: AppContext) {
   const router = Router();
 
@@ -56,21 +54,9 @@ export function publicAuthRoutes({ query, transaction, authProvider }: AppContex
     res.cookie(SESSION_COOKIE, token, { ...cookieOptions, maxAge: SESSION_SECONDS * 1000 }).json(actor);
   });
 
-  router.post('/register', limiter, async (req, res) => {
-    const body = registerSchema.parse(req.body);
-    await transaction(async client => {
-      // Serialise concurrent sign-ups for the same username so the uniqueness check below cannot race.
-      await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`register:${body.username}`]);
-      if ((await client.query('SELECT 1 FROM "Users" WHERE "Username"=$1', [body.username])).rowCount)
-        fail(409, 'اسم المستخدم مستخدم بالفعل.');
-      // Self-registration never grants a committee or leadership role.
-      await client.query(
-        `INSERT INTO "Users" ("RoleId","FullName","Username","Email","PhoneWhatsapp","PasswordHash","CreatedAt")
-          VALUES (${OBSERVER_ROLE_ID},$1,$2,$3,$4,$5,NOW())`,
-        [body.fullName, body.username, body.email, body.phoneWhatsapp, hashPassword(body.password)],
-      );
-    });
-    res.status(201).json({ message: 'تم إنشاء الحساب بدور مراقب. يمكنك تسجيل الدخول.' });
+  // Accounts are created by the developer only (see routes/users.ts); open sign-up would hand out roles.
+  router.post('/register', limiter, () => {
+    fail(403, 'التسجيل مغلق. يضيف المطوّر الحسابات الجديدة، تواصل معه للحصول على حساب.');
   });
 
   router.post('/logout', (_req, res) => {

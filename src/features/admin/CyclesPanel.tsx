@@ -1,15 +1,18 @@
 import { useState, type FormEvent } from 'react';
-import { Check, LoaderCircle, Plus } from 'lucide-react';
+import { Check, LoaderCircle, Plus, Trash2 } from 'lucide-react';
 import { Modal } from '../../components/ui/Modal';
 import { api, json } from '../../lib/api';
 import { number } from '../../lib/format';
 import type { Cycle } from '../../types';
+import { DeleteCycleDialog, type DeletedCycleSummary } from './DeleteCycleDialog';
 
 type Props = { cycles: Cycle[]; onChanged: () => Promise<void> };
 
 /** Lists every cycle and starts a new one. Starting a cycle archives the previous year; nothing is deleted. */
 export function CyclesPanel({ cycles, onChanged }: Props) {
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<Cycle | null>(null);
+  const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const current = cycles.find(c => c.isCurrent);
@@ -52,6 +55,9 @@ export function CyclesPanel({ cycles, onChanged }: Props) {
               <th>المستندات</th>
               <th>جلسات التصويت</th>
               <th>الحالة</th>
+              <th>
+                <span className="sr-only">حذف</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -69,11 +75,41 @@ export function CyclesPanel({ cycles, onChanged }: Props) {
                     {c.isCurrent ? 'الحالي' : 'أرشيف'}
                   </span>
                 </td>
+                <td>
+                  <button
+                    className="icon-button danger-icon"
+                    aria-label={`حذف عام ${c.name}`}
+                    title="حذف العام"
+                    disabled={cycles.length < 2}
+                    onClick={() => setDeleting(c)}
+                  >
+                    <Trash2 size={17} />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {notice && (
+        <p role="status" className="form-notice">
+          {notice}
+        </p>
+      )}
+      {deleting && (
+        <DeleteCycleDialog
+          cycle={deleting}
+          onClose={() => setDeleting(null)}
+          onDeleted={async (summary: DeletedCycleSummary) => {
+            setDeleting(null);
+            await onChanged();
+            setNotice(
+              `تم حذف عام ${summary.name}: ${number(summary.documents)} مستند و${number(summary.votes)} جلسة تصويت و${number(summary.filesRemoved)} ملف.` +
+                (summary.filesFailed ? ` تعذر حذف ${number(summary.filesFailed)} ملف من التخزين السحابي.` : ''),
+            );
+          }}
+        />
+      )}
       {creating && (
         <Modal title="بدء عام جديد" onClose={() => setCreating(false)} busy={busy}>
           <form className="form-stack modal-body" onSubmit={submit}>

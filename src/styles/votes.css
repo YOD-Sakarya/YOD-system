@@ -8,7 +8,7 @@
   margin-bottom: 24px;
 }
 .segmented button {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   padding: 7px 18px;
   border-radius: 5px;
@@ -38,10 +38,10 @@
   margin-bottom: 18px;
 }
 .ballot-card h2 {
-  font-size: 17px;
+  font-size: 20px;
 }
 .ballot-card > p {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   margin: 9px 0 23px;
   min-height: 40px;
@@ -58,7 +58,7 @@
   background: #f6f8fb;
   border: 1px solid #e9eef4;
   border-radius: 5px;
-  font-size: 11px;
+  font-size: 13px;
   isolation: isolate;
 }
 .ballot-preview b {
@@ -80,7 +80,7 @@
   border-top: 1px solid var(--line);
   padding-top: 17px;
   margin-top: 22px;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   gap: 10px;
 }
@@ -103,7 +103,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 17px;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
 }
 .committee-avatar {
@@ -115,7 +115,7 @@
   place-items: center;
 }
 .committee-card h2 {
-  font-size: 15px;
+  font-size: 18px;
 }
 .permission-tags {
   display: flex;
@@ -130,7 +130,7 @@
   background: #f4f6f9;
   border: 1px solid #e9edf2;
   padding: 2px 9px;
-  font-size: 10px;
+  font-size: 12px;
   border-radius: 4px;
   color: var(--muted);
 }
@@ -151,7 +151,7 @@
 .calendar-weekday {
   background: #f8fafc;
   text-align: center;
-  font-size: 11px;
+  font-size: 13px;
   padding: 13px 5px;
   border-block: 1px solid var(--line);
   color: #7f8b9d;
@@ -176,7 +176,7 @@
   place-items: center;
   width: 25px;
   height: 25px;
-  font-size: 12px;
+  font-size: 14px;
 }
 .calendar-day.today .day-number {
   background: var(--red);
@@ -185,7 +185,7 @@
 }
 .calendar-day button {
   text-align: right;
-  font-size: 9px;
+  font-size: 11px;
   padding: 4px 6px;
   color: var(--red);
   background: #faeef0;
@@ -200,7 +200,7 @@
   padding-inline: 22px;
 }
 .count-badge {
-  font-size: 11px;
+  font-size: 13px;
   margin-right: 7px;
   color: var(--muted);
   background: #f2f5f9;

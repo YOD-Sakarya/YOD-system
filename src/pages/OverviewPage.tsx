@@ -12,7 +12,6 @@ import {
 import { NavLink, useNavigate } from 'react-router-dom';
 import { DocumentTable } from '../components/documents/DocumentTable';
 import { PageHeading } from '../components/ui/PageHeading';
-import { matchesDocument } from '../lib/documents';
 import { date, number } from '../lib/format';
 import { isOpen } from '../lib/votes';
 import type { Data, Document, User, VoteSession } from '../types';
@@ -21,7 +20,6 @@ import type { Data, Document, User, VoteSession } from '../types';
 export function OverviewPage({
   data,
   user,
-  query,
   loading,
   onUpload,
   readOnly = false,
@@ -30,7 +28,6 @@ export function OverviewPage({
 }: {
   data: Data;
   user: User;
-  query: string;
   loading: boolean;
   onUpload: () => void;
   readOnly?: boolean;
@@ -124,12 +121,7 @@ export function OverviewPage({
               عرض الكل <ChevronLeft size={16} />
             </NavLink>
           </div>
-          <DocumentTable
-            documents={data.documents.filter(d => matchesDocument(d, query)).slice(0, 6)}
-            onSelect={onDocument}
-            loading={loading}
-            compact
-          />
+          <DocumentTable documents={data.documents.slice(0, 6)} onSelect={onDocument} loading={loading} compact />
         </section>
         <aside className="agenda-rail">
           <section className="panel">

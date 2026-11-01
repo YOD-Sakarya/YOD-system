@@ -4,7 +4,7 @@ import { Brand } from '../../components/ui/Brand';
 import { api, json } from '../../lib/api';
 import type { User } from '../../types';
 
-/** Username/password sign-in and observer registration against the Express API. */
+/** Username/password sign-in. Accounts are created by the developer, so there is no sign-up form. */
 export function LegacyLoginScreen({
   onLogin,
   onPreview,
@@ -14,29 +14,24 @@ export function LegacyLoginScreen({
   onPreview: () => void;
   error: string;
 }) {
-  const [register, setRegister] = useState(false),
-    [visible, setVisible] = useState(false),
-    [busy, setBusy] = useState(false),
-    [error, setError] = useState(initialError),
-    [notice, setNotice] = useState('');
+  const [visible, setVisible] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(initialError);
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setError('');
-    setNotice('');
     const fields = Object.fromEntries(new FormData(event.currentTarget));
     try {
-      if (register) {
-        await api('/auth/register', { method: 'POST', body: json(fields) });
-        setRegister(false);
-        setNotice('تم إنشاء حسابك بدور مراقب. سجّل الدخول للمتابعة.');
-      } else onLogin(await api<User>('/auth/login', { method: 'POST', body: json(fields) }));
+      onLogin(await api<User>('/auth/login', { method: 'POST', body: json(fields) }));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'تعذر تسجيل الدخول.');
     } finally {
       setBusy(false);
     }
   }
+
   return (
     <div className="login-page">
       <section className="login-form-side">
@@ -46,59 +41,28 @@ export function LegacyLoginScreen({
             <span />
             مساحة عمل الهيئة التنفيذية
           </span>
-          <h1>{register ? 'لنبدأ العمل معًا.' : 'مرحبًا بعودتك.'}</h1>
-          <p>{register ? 'أنشئ حساب مراقب لمتابعة أعمال الاتحاد.' : 'كل ما تحتاجه لخدمة طلابنا، في مساحة واحدة.'}</p>
-          <form key={String(register)} onSubmit={submit} className="form-stack">
+          <h1>مرحبًا بعودتك.</h1>
+          <p>كل ما تحتاجه لخدمة طلابنا، في مساحة واحدة.</p>
+          <form onSubmit={submit} className="form-stack">
             {error && (
               <div role="alert" className="form-error">
                 {error}
               </div>
             )}
-            {notice && (
-              <div role="status" className="form-notice">
-                {notice}
-              </div>
-            )}
-            {register && (
-              <label>
-                الاسم الكامل
-                <input name="fullName" autoComplete="name" required minLength={3} maxLength={150} />
-              </label>
-            )}
             <label>
               اسم المستخدم
-              <input
-                name="username"
-                autoComplete="username"
-                required
-                minLength={register ? 3 : 1}
-                maxLength={100}
-                placeholder="أدخل اسم المستخدم"
-              />
+              <input name="username" autoComplete="username" required maxLength={100} placeholder="أدخل اسم المستخدم" />
             </label>
-            {register && (
-              <div className="form-grid">
-                <label>
-                  البريد الإلكتروني
-                  <input name="email" type="email" autoComplete="email" required dir="ltr" />
-                </label>
-                <label>
-                  رقم الواتساب
-                  <input name="phoneWhatsapp" type="tel" autoComplete="tel" maxLength={30} dir="ltr" />
-                </label>
-              </div>
-            )}
             <label>
               كلمة المرور
               <div className="password-input">
                 <input
                   name="password"
                   type={visible ? 'text' : 'password'}
-                  autoComplete={register ? 'new-password' : 'current-password'}
+                  autoComplete="current-password"
                   required
-                  minLength={register ? 10 : 1}
                   maxLength={256}
-                  placeholder={register ? '١٠ أحرف على الأقل' : 'أدخل كلمة المرور'}
+                  placeholder="أدخل كلمة المرور"
                 />
                 <button
                   type="button"
@@ -112,21 +76,9 @@ export function LegacyLoginScreen({
             </label>
             <button className="button primary full" disabled={busy}>
               {busy ? <LoaderCircle className="spin" size={18} /> : <ArrowLeft size={18} />}
-              {register ? 'إنشاء حساب' : 'تسجيل الدخول'}
+              تسجيل الدخول
             </button>
           </form>
-          <p className="login-switch">
-            {register ? 'لديك حساب بالفعل؟' : 'ليس لديك حساب؟'}{' '}
-            <button
-              onClick={() => {
-                setRegister(!register);
-                setError('');
-                setNotice('');
-              }}
-            >
-              {register ? 'تسجيل الدخول' : 'إنشاء حساب مراقب'}
-            </button>
-          </p>
           <div className="login-preview">
             <span>ألقِ نظرة على مساحة العمل</span>
             <button onClick={onPreview}>

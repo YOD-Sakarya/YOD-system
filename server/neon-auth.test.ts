@@ -132,25 +132,19 @@ test('duplicate legacy emails and already claimed users cannot be automatically 
     );
   }
 });
-test('new identities create only observer accounts and never store a user password', async () => {
-  let created = false;
-  const actor = { userId: 80, fullName: identity.name, roleId: 10, roleName: 'Observer' };
-  const result = await resolveNeonActor(
-    identity,
-    database(async (sql, params) => {
-      if (sql.includes('INSERT INTO "Users"')) {
-        assert.match(sql, /VALUES \(10,/);
-        assert.match(String(params[1]), /^neon_[a-f0-9]{32}$/);
-        assert.match(String(params[3]), /^!neon-managed:[a-f0-9]{64}$/);
-        created = true;
-        return { rows: [{ userId: 80 }] };
-      }
-      if (sql.includes('FROM "Users" u JOIN "Roles"')) return { rows: [actor] };
-      return { rows: [], rowCount: 0 };
-    }),
+test('unknown identities are rejected: signing up never creates a user or grants a role', async () => {
+  let inserted = false;
+  await assert.rejects(
+    resolveNeonActor(
+      identity,
+      database(async sql => {
+        if (sql.includes('INSERT INTO')) inserted = true;
+        return { rows: [], rowCount: 0 };
+      }),
+    ),
+    error => error instanceof NeonAuthError && error.status === 403,
   );
-  assert.equal(created, true);
-  assert.deepEqual(result, actor);
+  assert.equal(inserted, false);
 });
 test('missing setup table returns a safe service error rather than creating schema at runtime', async () => {
   await assert.rejects(

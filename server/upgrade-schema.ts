@@ -10,6 +10,14 @@ import { pool } from './db.js';
 const PREVIOUS = { name: '2025/2026', start: '2025-09-01', end: '2026-08-31' };
 const CURRENT = { name: '2026/2027', start: '2026-09-01' };
 const DEVELOPER_ROLE = { id: 11, name: 'مطوّر' };
+/** The observer role (10) became the oversight committee: chair, deputy chair and rapporteur. */
+const OVERSIGHT_ROLES = [
+  { id: 10, name: 'رئيس لجنة الرقابة' },
+  { id: 12, name: 'نائب رئيس لجنة الرقابة' },
+  { id: 13, name: 'المقرر' },
+];
+/** Oversight members may upload reports, statements, minutes and plans (not proposals, which leadership reviews). */
+const OVERSIGHT_DOC_TYPES = [2, 3, 4, 5];
 
 const client = await pool.connect();
 try {
@@ -61,6 +69,20 @@ try {
     'INSERT INTO "Roles" ("RoleId","RoleName") OVERRIDING SYSTEM VALUE VALUES ($1,$2) ON CONFLICT ("RoleId") DO NOTHING',
     [DEVELOPER_ROLE.id, DEVELOPER_ROLE.name],
   );
+
+  for (const role of OVERSIGHT_ROLES) {
+    await client.query(
+      `INSERT INTO "Roles" ("RoleId","RoleName") OVERRIDING SYSTEM VALUE VALUES ($1,$2)
+        ON CONFLICT ("RoleId") DO UPDATE SET "RoleName"=EXCLUDED."RoleName"`,
+      [role.id, role.name],
+    );
+    for (const docTypeId of OVERSIGHT_DOC_TYPES)
+      await client.query(
+        `INSERT INTO "RoleDocPerms" ("RoleId","DocTypeId") SELECT $1,$2
+          WHERE NOT EXISTS (SELECT 1 FROM "RoleDocPerms" WHERE "RoleId"=$1 AND "DocTypeId"=$2)`,
+        [role.id, docTypeId],
+      );
+  }
 
   await client.query('COMMIT');
   console.log('Schema upgrade complete.');

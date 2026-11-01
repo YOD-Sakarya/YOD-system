@@ -30,7 +30,7 @@
   z-index: 2;
 }
 .modal > header h2 {
-  font-size: 15px;
+  font-size: 18px;
 }
 .modal-body {
   padding: 24px;
@@ -66,17 +66,17 @@
   margin-bottom: 7px;
 }
 .upload-zone > strong {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 550;
   word-break: break-word;
 }
 .upload-zone > span {
-  font-size: 10px;
+  font-size: 12px;
   color: #9aa5b5;
   font-weight: 400;
 }
 .upload-zone input {
-  font-size: 10px;
+  font-size: 12px;
   max-width: 100%;
   margin-top: 8px;
 }
@@ -90,11 +90,11 @@
   flex: 1;
 }
 .detail-title h3 {
-  font-size: 18px;
+  font-size: 22px;
   line-height: 1.7;
 }
 .detail-title > div > span {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
 }
 .details-grid {
@@ -108,11 +108,11 @@
   border-radius: 7px;
 }
 .details-grid dt {
-  font-size: 10px;
+  font-size: 12px;
   color: #8c97a7;
 }
 .details-grid dd {
-  font-size: 12px;
+  font-size: 14px;
   margin: 3px 0 0;
 }
 .detail-actions {
@@ -136,7 +136,7 @@
   margin-bottom: 14px;
 }
 .section-title h3 {
-  font-size: 14px;
+  font-size: 17px;
 }
 .review-row {
   display: flex;
@@ -149,17 +149,17 @@
   flex: 1;
 }
 .review-row strong {
-  font-size: 11px;
+  font-size: 13px;
   display: block;
 }
 .review-row small {
-  font-size: 9px;
+  font-size: 11px;
   color: #8e99a9;
   display: block;
   margin-top: 4px;
 }
 .review-row p {
-  font-size: 11px;
+  font-size: 13px;
   color: #6c7b90;
   margin-top: 7px;
   white-space: pre-wrap;
@@ -193,7 +193,7 @@
   margin-top: 20px;
 }
 .review-form h3 {
-  font-size: 13px;
+  font-size: 16px;
 }
 .review-form .button {
   align-self: flex-start;
@@ -203,7 +203,7 @@
   background: #fff4f5;
   padding: 17px;
   border-radius: 7px;
-  font-size: 11px;
+  font-size: 13px;
   margin-top: 20px;
   color: #97313f;
 }
@@ -212,7 +212,7 @@
 }
 .delete-confirm .button {
   margin-left: 8px;
-  font-size: 10px;
+  font-size: 12px;
 }
 .delete-confirm > strong {
   display: block;
@@ -227,7 +227,7 @@
   gap: 9px;
 }
 .option-fields legend {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: #4d5a6d;
   margin-bottom: 8px;
@@ -247,7 +247,7 @@
   margin-bottom: 10px;
 }
 .vote-dialog-title + p {
-  font-size: 12px;
+  font-size: 14px;
   line-height: 2;
 }
 .vote-dialog-title + p + p {
@@ -262,7 +262,7 @@
   gap: 10px;
 }
 .ballot-options legend {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   margin-bottom: 10px;
 }
@@ -281,7 +281,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 12px;
+  font-size: 14px;
 }
 .option-top input {
   accent-color: var(--red);
@@ -290,7 +290,7 @@
 }
 .option-top b {
   margin-right: auto;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--muted);
 }
@@ -324,7 +324,7 @@
   align-items: center;
   gap: 11px;
   max-width: calc(100% - 40px);
-  font-size: 12px;
+  font-size: 14px;
 }
 .toast .icon-button {
   color: #b9d1c6;

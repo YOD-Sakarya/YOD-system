@@ -113,21 +113,8 @@ export async function resolveNeonActor(
           ).rowCount;
           if (existing) throw new NeonAuthError(409, 'هذا الحساب مرتبط بهوية أخرى. تواصل مع مسؤول الاتحاد.');
         } else {
-          const username =
-            'neon_' +
-            createHash('sha256')
-              .update(identity.provider + ':' + identity.subject)
-              .digest('hex')
-              .slice(0, 32);
-          const created = (
-            await client.query(
-              `INSERT INTO "Users"
-            ("RoleId","FullName","Username","Email","PhoneWhatsapp","PasswordHash","CreatedAt")
-            VALUES (10,$1,$2,$3,'',$4,NOW()) RETURNING "UserId" AS "userId"`,
-              [identity.name, username, identity.email, '!neon-managed:' + randomBytes(32).toString('hex')],
-            )
-          ).rows[0];
-          userId = created.userId;
+          // Accounts are created by the developer; an unknown email never creates a user (and so grants no role).
+          throw new NeonAuthError(403, 'حسابك غير مسجل في مساحة العمل. تواصل مع المطوّر لإضافتك.');
         }
         await client.query(
           `INSERT INTO "AuthIdentities" ("Provider","Subject","UserId","CreatedAt") VALUES ($1,$2,$3,NOW())`,
