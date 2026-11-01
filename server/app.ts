@@ -61,10 +61,20 @@ export function createApp(dependencies: Dependencies = {}) {
   app.use(securityHeaders(context));
   app.use(express.json({ limit: '1mb' }), cookieParser());
 
-  // CSRF defence: state-changing requests must come from the app's own origin.
+  // CSRF defence: state-changing requests must come from the app's own origin, either the configured
+  // APP_ORIGIN or the host this request was sent to (browsers always send a truthful Origin header, so a
+  // cross-site page can never match the host it is attacking). This keeps preview/custom domains working.
   app.use('/api', (req, _res, next) => {
-    if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && req.get('origin') !== config.origin)
-      return next(new HttpError(403, 'مصدر الطلب غير مسموح.'));
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+    const origin = req.get('origin');
+    const host = req.get('x-forwarded-host') || req.get('host');
+    let sameHost = false;
+    try {
+      sameHost = !!origin && !!host && new URL(origin).host === host;
+    } catch {
+      // Malformed Origin header: treated as foreign.
+    }
+    if (origin !== config.origin && !sameHost) return next(new HttpError(403, 'مصدر الطلب غير مسموح.'));
     next();
   });
 

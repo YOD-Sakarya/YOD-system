@@ -41,6 +41,17 @@ test('protected resources reject anonymous requests before querying the database
     }
   });
 });
+test('a request whose Origin matches the host it was sent to passes the origin check without APP_ORIGIN', async () => {
+  await withServer(async base => {
+    // 127.0.0.1:port is not config.origin, but it is the server's own host, as on a Vercel deployment URL.
+    const response = await fetch(base + '/api/auth/login', {
+      method: 'POST',
+      headers: { Origin: base, 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    assert.equal(response.status, 400);
+  });
+});
 test('CSRF origin checks protect every mutation including login and logout', async () => {
   await withServer(async base => {
     for (const endpoint of ['/auth/login', '/auth/logout', '/documents', '/reviews', '/votes']) {
