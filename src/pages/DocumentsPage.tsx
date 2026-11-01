@@ -27,12 +27,18 @@ export function DocumentsPage({
   const location = useLocation(),
     navigate = useNavigate();
   const role = new URLSearchParams(location.search).get('role') || '';
-  const [status, setStatus] = useState(''),
+  const [status, setStatus] = useState(() => new URLSearchParams(location.search).get('status') ?? ''),
     [type, setType] = useState(''),
     [quarter, setQuarter] = useState(''),
     // The workspace search sends "show all results" here as ?q=.
     [search, setSearch] = useState(() => new URLSearchParams(location.search).get('q') ?? ''),
     [page, setPage] = useState(1);
+  // Search shortcuts link here with ?status= / ?q=, also when this page is already open.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.has('status')) setStatus(params.get('status') ?? '');
+    if (params.has('q')) setSearch(params.get('q') ?? '');
+  }, [location.search]);
   useEffect(() => setPage(1), [status, type, quarter, search, role, reviews]);
   const docs = data.documents.filter(
     d =>

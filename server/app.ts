@@ -11,6 +11,7 @@ import { errorHandler } from './http/errorHandler.js';
 import { HttpError } from './http/errors.js';
 import type { NeonIdentity } from './neon-auth.js';
 import { publicAuthRoutes, sessionRoutes } from './routes/auth.js';
+import { accountRoutes } from './routes/account.js';
 import { catalogRoutes } from './routes/catalog.js';
 import { cycleRoutes } from './routes/cycles.js';
 import { documentRoutes } from './routes/documents.js';
@@ -91,6 +92,7 @@ export function createApp(dependencies: Dependencies = {}) {
   // Everything below requires a session.
   app.use('/api', authenticate(context));
   app.use('/api/auth', sessionRoutes());
+  app.use('/api/account', accountRoutes(context));
   app.use('/api/catalog', catalogRoutes(context));
   app.use('/api/documents', documentRoutes(context));
   app.use('/api/reviews', reviewRoutes(context));

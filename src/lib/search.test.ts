@@ -68,6 +68,22 @@ const index = buildSearchIndex({
     { roleId: 11, roleName: 'مطوّر' },
   ],
   pages: [{ to: '/votes', label: 'جلسات التصويت' }],
+  commands: [
+    {
+      key: 'upload',
+      title: 'إضافة مستند جديد',
+      subtitle: 'رفع ملف',
+      keywords: 'رفع ملف تحميل upload',
+      action: { type: 'command', command: 'upload' },
+    },
+    {
+      key: 'pw',
+      title: 'تغيير كلمة المرور',
+      subtitle: 'حسابي',
+      keywords: 'كلمه السر باسورد',
+      action: { type: 'path', to: '/account#password' },
+    },
+  ],
   isCommittee: role => role.roleId !== 11,
 });
 
@@ -104,7 +120,7 @@ test('archived items carry their year, and documents from every cycle are found'
 test('empty query lists pages; the developer role is not offered as a committee', () => {
   assert.deepEqual(
     search(index, '  ').map(r => r.key),
-    ['page:/votes'],
+    ['page:/votes', 'cmd:upload', 'cmd:pw'],
   );
   assert.ok(search(index, 'مسؤول').some(r => r.key === 'role:7'));
   assert.equal(
@@ -119,4 +135,16 @@ test('highlight marks matches in the original spelling, including through diacri
     { text: 'أنشطة', match: true },
   ]);
   assert.deepEqual(highlight('بدون', ''), [{ text: 'بدون', match: false }]);
+});
+
+test('search reaches functionality: actions are found by their name or by everyday synonyms', () => {
+  assert.equal(search(index, 'رفع ملف')[0].key, 'cmd:upload');
+  assert.equal(search(index, 'باسورد')[0].key, 'cmd:pw', 'informal word for password');
+  assert.equal(search(index, 'كلمة السر')[0].key, 'cmd:pw', 'ta marbuta / alef variants are folded');
+  assert.deepEqual(
+    search(index, 'upload').map(r => r.group),
+    ['actions'],
+    'English keyword',
+  );
+  assert.deepEqual(search(index, 'كلمة المرور')[0].action, { type: 'path', to: '/account#password' });
 });

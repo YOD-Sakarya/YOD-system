@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { ArrowUpLeft, CornerDownLeft, Files, Search, UserRound, Users, Vote, X } from 'lucide-react';
+import { ArrowUpLeft, CornerDownLeft, Files, Search, UserRound, Users, Vote, X, Zap } from 'lucide-react';
 import {
   GROUP_LABELS,
   highlight,
@@ -19,6 +19,7 @@ type Props = {
 
 const GROUP_ICONS: Record<SearchGroup, ReactNode> = {
   pages: <ArrowUpLeft size={17} />,
+  actions: <Zap size={17} />,
   documents: <Files size={17} />,
   votes: <Vote size={17} />,
   committees: <Users size={17} />,

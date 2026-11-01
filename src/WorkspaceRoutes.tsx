@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { isDeveloper } from './lib/roles';
+import { AccountPage } from './pages/AccountPage';
 import { AdminPage } from './pages/AdminPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { CommitteesPage } from './pages/CommitteesPage';
@@ -86,6 +87,7 @@ export function WorkspaceRoutes({
       />
       <Route path="/calendar" element={<CalendarPage data={data} onDocument={onDocument} />} />
       <Route path="/committees" element={<CommitteesPage data={data} />} />
+      <Route path="/account" element={<AccountPage />} />
       {isDeveloper(user) && (
         <Route path="/admin" element={<AdminPage data={data} storage={storage} onCyclesChanged={onCyclesChanged} />} />
       )}

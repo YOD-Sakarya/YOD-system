@@ -16,8 +16,8 @@ const OVERSIGHT_ROLES = [
   { id: 12, name: 'نائب رئيس لجنة الرقابة' },
   { id: 13, name: 'المقرر' },
 ];
-/** Oversight members may upload reports, statements, minutes and plans (not proposals, which leadership reviews). */
-const OVERSIGHT_DOC_TYPES = [2, 3, 4, 5];
+/** Oversight members only upload reports (type 2): no proposals, statements, minutes or plans. */
+const OVERSIGHT_DOC_TYPES = [2];
 
 const client = await pool.connect();
 try {
@@ -83,6 +83,12 @@ try {
         [role.id, docTypeId],
       );
   }
+
+  // Narrow older installs that had granted the oversight roles more types.
+  await client.query('DELETE FROM "RoleDocPerms" WHERE "RoleId" = ANY($1::int[]) AND "DocTypeId" <> ALL($2::int[])', [
+    OVERSIGHT_ROLES.map(role => role.id),
+    OVERSIGHT_DOC_TYPES,
+  ]);
 
   await client.query('COMMIT');
   console.log('Schema upgrade complete.');

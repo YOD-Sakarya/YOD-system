@@ -15,7 +15,7 @@ import { StorageAlert } from './components/layout/StorageAlert';
 import { Toast } from './components/layout/Toast';
 import { Topbar } from './components/layout/Topbar';
 import { demoData, demoUser } from './data/demo';
-import { adminNavigation, navigation } from './data/navigation';
+import { accountNavigation, adminNavigation, navigation } from './data/navigation';
 import AuthEntry from './features/auth/AuthEntry';
 import { LegacyLoginScreen } from './features/auth/LegacyLoginScreen';
 import { useCurrentUser } from './hooks/useCurrentUser';
@@ -27,7 +27,8 @@ import { useStorageUsage } from './hooks/useStorageUsage';
 import { useWorkspaceData } from './hooks/useWorkspaceData';
 import { api } from './lib/api';
 import { signOutNeon } from './lib/auth';
-import { isCommitteeRole, isDeveloper } from './lib/roles';
+import { VOTE_MANAGER_ROLE_IDS, isCommitteeRole, isDeveloper } from './lib/roles';
+import { buildCommands } from './lib/commands';
 import { buildSearchIndex, type SearchAction } from './lib/search';
 import type { Data, User } from './types';
 import { WorkspaceRoutes } from './WorkspaceRoutes';
@@ -71,6 +72,21 @@ export default function App() {
 
   // The search covers every year (not just the one being browsed); the developer can also find people.
   const managedUsers = useManagedUsers(developer);
+  // Only offer actions the user may run: creating needs a role that allows it, and finished years are read-only.
+  const canWriteHere = !archived || (!!user && isDeveloper(user));
+  const commands = useMemo(
+    () =>
+      user
+        ? buildCommands({
+            developer,
+            canUpload:
+              canWriteHere &&
+              (isDeveloper(user) || workspace.data.catalog.permissions.some(p => p.roleId === user.roleId)),
+            canCreateSession: canWriteHere && VOTE_MANAGER_ROLE_IDS.includes(user.roleId),
+          })
+        : [],
+    [user, developer, canWriteHere, workspace.data.catalog.permissions],
+  );
   const searchIndex = useMemo(
     () =>
       buildSearchIndex({
@@ -80,14 +96,19 @@ export default function App() {
         roles: workspace.data.catalog.roles,
         pages: (developer ? [...navigation, adminNavigation] : navigation).map(({ to, label }) => ({ to, label })),
         users: developer ? managedUsers : undefined,
+        commands,
         isCommittee: isCommitteeRole,
       }),
-    [workspace.data, cycles, developer, managedUsers],
+    [workspace.data, cycles, developer, managedUsers, commands],
   );
   /** Opening a result from another year switches the page to that year so its read-only rules apply. */
   const openSearchResult = (action: SearchAction) => {
     if (action.type === 'path') navigate(action.to);
-    else if (action.type === 'document') {
+    else if (action.type === 'command') {
+      if (action.command === 'upload') dialogs.openUpload();
+      else if (action.command === 'new-session') dialogs.openSession();
+      else void logout();
+    } else if (action.type === 'document') {
       setChosenCycleId(action.document.cycleId);
       dialogs.viewDocument(action.document);
     } else {
@@ -166,7 +187,9 @@ export default function App() {
   const { loading } = workspace;
   const data = scopedData;
   const pendingReviews = data.documents.filter(doc => doc.status === PENDING_STATUS).length;
-  const title = [...navigation, adminNavigation].find(item => item.to === location.pathname)?.label || 'مساحة العمل';
+  const title =
+    [...navigation, adminNavigation, accountNavigation].find(item => item.to === location.pathname)?.label ||
+    'مساحة العمل';
 
   return (
     <div className="workspace" dir="rtl">

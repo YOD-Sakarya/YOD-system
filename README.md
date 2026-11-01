@@ -255,7 +255,7 @@ signs up with the new email.
 ## Oversight committee
 
 The old observer role is now the oversight committee: **رئيس لجنة الرقابة** (10), **نائب رئيس لجنة الرقابة** (12)
-and **المقرر** (13). They can view documents like any member and upload reports, statements, minutes and plans.
+and **المقرر** (13). They can view documents like any member and upload **reports only**.
 What they upload is private to the three of them (and the developer) until the other two have accepted it; then
 everyone can see it. Assign the three roles from the developer console. Self-registration is closed: the developer
 creates every account.

@@ -10,5 +10,8 @@ export const navigation = [
   { to: '/committees', label: 'اللجان والصلاحيات', icon: Users },
 ];
 
+/** Reached from the user card in the sidebar; only used for the page title. */
+export const accountNavigation = { to: '/account', label: 'حسابي' };
+
 /** Developer-only entry, appended to the sidebar for the developer role. */
 export const adminNavigation = { to: '/admin', label: 'لوحة المطوّر', icon: Settings2 };

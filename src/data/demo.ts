@@ -31,7 +31,7 @@ const permissionTypes = [
   [1, 2, 5],
   [1, 2, 5],
   [1, 2, 5],
-  [2, 3, 4, 5],
+  [2],
 ];
 export const demoData: Data = {
   catalog: {

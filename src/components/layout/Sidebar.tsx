@@ -84,11 +84,13 @@ export function Sidebar({ user, roles, pendingReviews, open, mobile, onClose, on
         })}
       </nav>
       <div className="sidebar-bottom">
-        <div className="avatar small">{user.fullName.charAt(0)}</div>
-        <div>
-          <strong>{user.fullName}</strong>
-          <small>{user.roleName}</small>
-        </div>
+        <Link className="user-link" to="/account" title="حسابي" aria-label={`حسابي: ${user.fullName}`}>
+          <div className="avatar small">{user.fullName.charAt(0)}</div>
+          <div>
+            <strong>{user.fullName}</strong>
+            <small>{user.roleName}</small>
+          </div>
+        </Link>
         <button className="icon-button" onClick={onLogout} aria-label="تسجيل الخروج" title="تسجيل الخروج">
           <LogOut size={18} />
         </button>

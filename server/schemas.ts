@@ -31,6 +31,16 @@ export const reviewSchema = z.object({
   comment: z.string().max(4000),
 });
 
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1).max(256),
+  newPassword: z.string().min(10).max(256),
+});
+
+export const changeEmailSchema = z.object({
+  email: z.email().max(254),
+  currentPassword: z.string().min(1).max(256),
+});
+
 export const loginSchema = z.object({
   username: z.string().trim().min(1).max(254),
   password: z.string().min(1).max(256),

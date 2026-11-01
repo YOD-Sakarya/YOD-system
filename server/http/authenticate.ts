@@ -10,6 +10,8 @@ export const SESSION_COOKIE = 'yod_session';
 export const JWT_ISSUER = 'yod-express';
 export const JWT_AUDIENCE = 'yod-react';
 
+export const SESSION_SECONDS = 24 * 60 * 60;
+
 /** Cookie settings shared by login (set) and logout (clear); scoped to the API only. */
 export const cookieOptions = { httpOnly: true, sameSite: 'lax' as const, secure: config.production, path: '/api' };
 
@@ -43,6 +45,16 @@ async function actorFromCookie(req: Request, context: AppContext): Promise<Actor
     throw new HttpError(401, 'انتهت الجلسة. سجّل الدخول مجددًا.');
   const { passwordHash: _omit, ...actor } = row;
   return actor as Actor;
+}
+
+/** Signs the session cookie for a user. Bound to the password hash, so a password change ends older sessions. */
+export function startSession(res: Response, userId: number, passwordHash: string) {
+  const token = jwt.sign({ sub: String(userId), ver: sessionVersion(passwordHash) }, config.jwtSecret, {
+    expiresIn: SESSION_SECONDS,
+    issuer: JWT_ISSUER,
+    audience: JWT_AUDIENCE,
+  });
+  res.cookie(SESSION_COOKIE, token, { ...cookieOptions, maxAge: SESSION_SECONDS * 1000 });
 }
 
 /** Requires a valid session on everything mounted after it and exposes the user as `req.actor`. */

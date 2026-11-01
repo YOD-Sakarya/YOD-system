@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { LoaderCircle, Pencil, Plus, Search } from 'lucide-react';
 import { Empty } from '../../components/ui/Empty';
 import { api } from '../../lib/api';
@@ -14,6 +14,7 @@ export function UsersPanel({ roles }: { roles: Catalog['roles'] }) {
   const [error, setError] = useState('');
   // The workspace search opens this tab with ?q=<name>.
   const [params] = useSearchParams();
+  const location = useLocation();
   const [filter, setFilter] = useState(params.get('q') ?? '');
   // `null` closed, `'new'` creating, otherwise the account being edited.
   const [editing, setEditing] = useState<ManagedUser | 'new' | null>(null);
@@ -29,6 +30,10 @@ export function UsersPanel({ roles }: { roles: Catalog['roles'] }) {
   useEffect(() => {
     void load();
   }, [load]);
+  // "Add a user" in the search box links here with ?new=1; location.key changes on every navigation.
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get('new') === '1') setEditing('new');
+  }, [location.key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const visible = (users || []).filter(u =>
     matchesText(`${u.fullName} ${u.username} ${u.email} ${u.roleName}`, filter),

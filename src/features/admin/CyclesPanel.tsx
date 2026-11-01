@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Check, LoaderCircle, Plus, Trash2 } from 'lucide-react';
 import { Modal } from '../../components/ui/Modal';
 import { api, json } from '../../lib/api';
@@ -11,6 +12,11 @@ type Props = { cycles: Cycle[]; onChanged: () => Promise<void> };
 /** Lists every cycle and starts a new one. Starting a cycle archives the previous year; nothing is deleted. */
 export function CyclesPanel({ cycles, onChanged }: Props) {
   const [creating, setCreating] = useState(false);
+  const location = useLocation();
+  // "Start a new year" in the search box links here with ?new=1.
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get('new') === '1') setCreating(true);
+  }, [location.key]); // eslint-disable-line react-hooks/exhaustive-deps
   const [deleting, setDeleting] = useState<Cycle | null>(null);
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);

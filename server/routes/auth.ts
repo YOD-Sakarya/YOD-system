@@ -1,14 +1,12 @@
 import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
-import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
-import { cookieOptions, JWT_AUDIENCE, JWT_ISSUER, SESSION_COOKIE } from '../http/authenticate.js';
+import { cookieOptions, SESSION_COOKIE, startSession } from '../http/authenticate.js';
 import type { AppContext } from '../http/context.js';
 import { fail, HttpError } from '../http/errors.js';
-import { type Actor, sessionVersion, verifyPassword } from '../security.js';
+import { type Actor, verifyPassword } from '../security.js';
 import { loginSchema } from '../schemas.js';
 
-const SESSION_SECONDS = 24 * 60 * 60;
 /** Prefix of placeholder hashes for accounts managed by Neon; they can never sign in with a password. */
 const NEON_MANAGED_PREFIX = '!neon-managed:';
 
@@ -51,12 +49,8 @@ export function publicAuthRoutes({ query, transaction, authProvider }: AppContex
     if (!user || user.password.startsWith(NEON_MANAGED_PREFIX) || !verifyPassword(body.password, user.password))
       return fail(401, 'اسم المستخدم أو كلمة المرور غير صحيحة.');
     const actor: Actor = { userId: user.userId, fullName: user.fullName, roleId: user.roleId, roleName: user.roleName };
-    const token = jwt.sign({ sub: String(actor.userId), ver: sessionVersion(user.password) }, config.jwtSecret, {
-      expiresIn: SESSION_SECONDS,
-      issuer: JWT_ISSUER,
-      audience: JWT_AUDIENCE,
-    });
-    res.cookie(SESSION_COOKIE, token, { ...cookieOptions, maxAge: SESSION_SECONDS * 1000 }).json(actor);
+    startSession(res, actor.userId, user.password);
+    res.json(actor);
   });
 
   // Accounts are created by the developer only (see routes/users.ts); open sign-up would hand out roles.

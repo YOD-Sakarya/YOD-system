@@ -1,4 +1,6 @@
 import type { Cycle, Document, ManagedUser, VoteSession } from '../types';
+import type { CommandDef } from './commands';
+import { date } from './format';
 
 /* ---------- Arabic-friendly text matching ---------- */
 
@@ -85,9 +87,13 @@ export function highlight(text: string, query: string): Segment[] {
 
 /* ---------- Search index ---------- */
 
-export type SearchGroup = 'pages' | 'documents' | 'votes' | 'committees' | 'users';
+export type SearchGroup = 'pages' | 'actions' | 'documents' | 'votes' | 'committees' | 'users';
 export type SearchAction =
-  { type: 'document'; document: Document } | { type: 'vote'; session: VoteSession } | { type: 'path'; to: string };
+  | { type: 'document'; document: Document }
+  | { type: 'vote'; session: VoteSession }
+  | { type: 'path'; to: string }
+  /** Something the app itself runs (open a dialog, sign out). */
+  | { type: 'command'; command: 'upload' | 'new-session' | 'logout' };
 
 export type SearchResult = {
   key: string;
@@ -103,13 +109,21 @@ type Entry = SearchResult & { titleFolded: string; extraFolded: string; recency:
 
 export const GROUP_LABELS: Record<SearchGroup, string> = {
   pages: 'الصفحات',
+  actions: 'الإجراءات',
   documents: 'المستندات',
   votes: 'جلسات التصويت',
   committees: 'اللجان',
   users: 'المستخدمون',
 };
-const GROUP_ORDER: SearchGroup[] = ['pages', 'documents', 'votes', 'committees', 'users'];
-const GROUP_LIMIT: Record<SearchGroup, number> = { pages: 3, documents: 6, votes: 3, committees: 3, users: 4 };
+const GROUP_ORDER: SearchGroup[] = ['pages', 'actions', 'documents', 'votes', 'committees', 'users'];
+const GROUP_LIMIT: Record<SearchGroup, number> = {
+  pages: 3,
+  actions: 5,
+  documents: 6,
+  votes: 3,
+  committees: 3,
+  users: 4,
+};
 
 type IndexSource = {
   documents: Document[];
@@ -117,6 +131,8 @@ type IndexSource = {
   cycles: Cycle[];
   roles: { roleId: number; roleName: string }[];
   pages: { to: string; label: string }[];
+  /** Things the user can do (see lib/commands.ts). */
+  commands: CommandDef[];
   /** Only the developer receives users. */
   users?: ManagedUser[];
   /** Roles shown as committees (the developer role is not one). */
@@ -144,6 +160,18 @@ export function buildSearchIndex(source: IndexSource): Entry[] {
       '',
     );
 
+  for (const command of source.commands)
+    add(
+      {
+        key: `cmd:${command.key}`,
+        group: 'actions',
+        title: command.title,
+        subtitle: command.subtitle,
+        action: command.action,
+      },
+      command.keywords,
+    );
+
   for (const doc of source.documents) {
     const cycle = cycleName.get(doc.cycleId);
     add(
@@ -155,7 +183,7 @@ export function buildSearchIndex(source: IndexSource): Entry[] {
         badge: cycle && !cycle.isCurrent ? cycle.name : undefined,
         action: { type: 'document', document: doc },
       },
-      `${doc.typeName} ${doc.roleName} ${doc.ownerName} ${doc.status} ${doc.quarterName} ${cycle?.name ?? ''}`,
+      `${doc.typeName} ${doc.roleName} ${doc.ownerName} ${doc.status} ${doc.quarterName} ${cycle?.name ?? ''} ${date(doc.eventDate, { year: 'numeric' })}`,
       time(doc.createdAt),
     );
   }
@@ -222,7 +250,12 @@ function scoreEntry(entry: Entry, terms: string[]): number {
  */
 export function search(index: Entry[], query: string): SearchResult[] {
   const terms = toTerms(query);
-  if (!terms.length) return index.filter(entry => entry.group === 'pages');
+  // Nothing typed yet: offer quick navigation and the first few actions.
+  if (!terms.length)
+    return [
+      ...index.filter(entry => entry.group === 'pages'),
+      ...index.filter(entry => entry.group === 'actions').slice(0, 5),
+    ];
   const scored = index
     .map(entry => ({ entry, score: scoreEntry(entry, terms) }))
     .filter(item => item.score >= 0)

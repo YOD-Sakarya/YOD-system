@@ -1,0 +1,71 @@
+import { Router } from 'express';
+import { rateLimit } from 'express-rate-limit';
+import { startSession } from '../http/authenticate.js';
+import type { AppContext } from '../http/context.js';
+import { fail } from '../http/errors.js';
+import { changeEmailSchema, changePasswordSchema } from '../schemas.js';
+import { hashPassword, verifyPassword } from '../security.js';
+
+/**
+ * Self-service account settings: every signed-in user can change their own password and email.
+ * Both need the current password. In Neon mode the auth service owns credentials, so they are refused here.
+ * A wrong current password answers 403 (not 401), which the client would treat as an expired session.
+ */
+export function accountRoutes({ query, authProvider }: AppContext) {
+  const router = Router();
+  // Same brute-force protection as sign-in: these endpoints also check a password.
+  const limiter = rateLimit({
+    windowMs: 15 * 60000,
+    limit: 20,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: { message: 'محاولات كثيرة. حاول مرة أخرى بعد قليل.' },
+  });
+
+  const ensureManagedLocally = () => {
+    if (authProvider === 'neon') fail(409, 'تُدار بيانات الدخول عبر خدمة تسجيل الدخول. استخدم استعادة كلمة المرور.');
+  };
+
+  async function loadAccount(userId: number) {
+    const [row] = await query(
+      `SELECT "FullName" AS "fullName","Username" AS username,"Email" AS email,"PhoneWhatsapp" AS "phoneWhatsapp",
+        "PasswordHash" AS "passwordHash" FROM "Users" WHERE "UserId"=$1`,
+      [userId],
+    );
+    return row ?? fail(404, 'الحساب غير موجود.');
+  }
+
+  router.get('/', async (req, res) => {
+    const { passwordHash: _hash, ...profile } = await loadAccount(req.actor.userId);
+    res.set('Cache-Control', 'no-store').json({ ...profile, canChangeCredentials: authProvider === 'legacy' });
+  });
+
+  router.put('/password', limiter, async (req, res) => {
+    ensureManagedLocally();
+    const body = changePasswordSchema.parse(req.body);
+    const account = await loadAccount(req.actor.userId);
+    if (!verifyPassword(body.currentPassword, account.passwordHash)) fail(403, 'كلمة المرور الحالية غير صحيحة.');
+    if (body.newPassword === body.currentPassword) fail(400, 'اختر كلمة مرور مختلفة عن الحالية.');
+    const passwordHash = hashPassword(body.newPassword);
+    await query('UPDATE "Users" SET "PasswordHash"=$1 WHERE "UserId"=$2', [passwordHash, req.actor.userId]);
+    // Older sessions (other devices) stop working; this one continues with a fresh cookie.
+    startSession(res, req.actor.userId, passwordHash);
+    res.json({ message: 'تم تغيير كلمة المرور.' });
+  });
+
+  router.put('/email', limiter, async (req, res) => {
+    ensureManagedLocally();
+    const body = changeEmailSchema.parse(req.body);
+    const account = await loadAccount(req.actor.userId);
+    if (!verifyPassword(body.currentPassword, account.passwordHash)) fail(403, 'كلمة المرور الحالية غير صحيحة.');
+    const taken = await query('SELECT 1 FROM "Users" WHERE lower(btrim("Email"))=lower($1) AND "UserId"<>$2', [
+      body.email,
+      req.actor.userId,
+    ]);
+    if (taken.length) fail(409, 'البريد الإلكتروني مستخدم بالفعل.');
+    await query('UPDATE "Users" SET "Email"=$1 WHERE "UserId"=$2', [body.email, req.actor.userId]);
+    res.json({ message: 'تم تحديث البريد الإلكتروني.', email: body.email });
+  });
+
+  return router;
+}
