@@ -6,6 +6,7 @@ export const emptyData: Data = {
   documents: [],
   votes: [],
   catalog: { roles: [], types: [], quarters: [], permissions: [] },
+  cycles: [],
 };
 
 type Options = {
@@ -27,12 +28,13 @@ export function useWorkspaceData({ user, preview, setUser, setError }: Options) 
     setLoading(true);
     setError('');
     try {
-      const [documents, votes, catalog] = await Promise.all([
+      const [documents, votes, catalog, cycles] = await Promise.all([
         api<Data['documents']>('/documents'),
         api<Data['votes']>('/votes'),
         api<Data['catalog']>('/catalog'),
+        api<Data['cycles']>('/cycles'),
       ]);
-      if (version === loadVersion.current) setData({ documents, votes, catalog });
+      if (version === loadVersion.current) setData({ documents, votes, catalog, cycles });
     } catch (error) {
       if (version !== loadVersion.current) return;
       if (error instanceof ApiError && error.status === 401) {

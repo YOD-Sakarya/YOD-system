@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
 import { resolveNeonActor, verifyNeonToken } from '../neon-auth.js';
-import type { Actor } from '../security.js';
+import { type Actor, sessionVersion } from '../security.js';
 import type { AppContext } from './context.js';
 import { HttpError } from './errors.js';
 
@@ -32,12 +32,16 @@ async function actorFromCookie(req: Request, context: AppContext): Promise<Actor
   });
   if (typeof claims === 'string' || !claims.sub || !/^\d+$/.test(claims.sub))
     throw new HttpError(401, 'الجلسة غير صالحة.');
-  const [actor] = await context.query(
+  const [row] = await context.query(
     `SELECT u."UserId" AS "userId",u."FullName" AS "fullName",u."RoleId" AS "roleId",
-      r."RoleName" AS "roleName" FROM "Users" u JOIN "Roles" r ON r."RoleId"=u."RoleId" WHERE u."UserId"=$1`,
+      r."RoleName" AS "roleName",u."PasswordHash" AS "passwordHash" FROM "Users" u JOIN "Roles" r ON r."RoleId"=u."RoleId" WHERE u."UserId"=$1`,
     [Number(claims.sub)],
   );
-  if (!actor) throw new HttpError(401, 'الحساب غير موجود.');
+  if (!row) throw new HttpError(401, 'الحساب غير موجود.');
+  // A changed password (e.g. the seat was handed to someone else) invalidates every older session.
+  if (claims.ver !== sessionVersion(String(row.passwordHash)))
+    throw new HttpError(401, 'انتهت الجلسة. سجّل الدخول مجددًا.');
+  const { passwordHash: _omit, ...actor } = row;
   return actor as Actor;
 }
 

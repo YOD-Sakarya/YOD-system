@@ -12,8 +12,11 @@ import { HttpError } from './http/errors.js';
 import type { NeonIdentity } from './neon-auth.js';
 import { publicAuthRoutes, sessionRoutes } from './routes/auth.js';
 import { catalogRoutes } from './routes/catalog.js';
+import { cycleRoutes } from './routes/cycles.js';
 import { documentRoutes } from './routes/documents.js';
 import { reviewRoutes } from './routes/reviews.js';
+import { storageUsageRoutes } from './routes/storageUsage.js';
+import { userRoutes } from './routes/users.js';
 import { voteRoutes } from './routes/votes.js';
 
 type Dependencies = {
@@ -92,6 +95,10 @@ export function createApp(dependencies: Dependencies = {}) {
   app.use('/api/documents', documentRoutes(context));
   app.use('/api/reviews', reviewRoutes(context));
   app.use('/api/votes', voteRoutes(context));
+  app.use('/api/cycles', cycleRoutes(context));
+  // Developer-only administration.
+  app.use('/api/users', userRoutes(context));
+  app.use('/api/storage', storageUsageRoutes(context));
   app.use('/api', (_req, res) => {
     res.status(404).json({ message: 'المسار غير موجود.' });
   });

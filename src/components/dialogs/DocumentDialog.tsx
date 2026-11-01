@@ -3,7 +3,7 @@ import { Check, Download, FileText, LoaderCircle, Pencil, Trash2 } from 'lucide-
 import { api, json } from '../../lib/api';
 import { getAuthHeaders } from '../../lib/auth';
 import { date } from '../../lib/format';
-import { PROPOSAL_TYPE_ID, REVIEWER_ROLE_IDS } from '../../lib/roles';
+import { PROPOSAL_TYPE_ID, REVIEWER_ROLE_IDS, isDeveloper } from '../../lib/roles';
 import type { Document, User } from '../../types';
 import { Modal } from '../ui/Modal';
 import { ReviewProgress } from '../ui/ReviewProgress';
@@ -15,14 +15,19 @@ export function DocumentDialog({
   document: doc,
   user,
   preview,
+  archived,
   onClose,
   onSaved,
   onEdit,
-}: DialogProps & { document: Document; user: User; onEdit: (d: Document) => void }) {
+}: DialogProps & { document: Document; user: User; archived: boolean; onEdit: (d: Document) => void }) {
   const [error, setError] = useState(''),
     [busy, setBusy] = useState(false),
     [confirm, setConfirm] = useState(false);
-  const canEdit = doc.ownerUserId === user.userId || REVIEWER_ROLE_IDS.includes(user.roleId);
+  const developer = isDeveloper(user);
+  // Finished cycles are read-only for everyone except the developer; only the developer deletes.
+  const canEdit =
+    (doc.ownerUserId === user.userId || REVIEWER_ROLE_IDS.includes(user.roleId) || developer) &&
+    (!archived || developer);
   const myReview = doc.reviews.find(r => r.reviewerId === user.userId);
   async function review(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -124,10 +129,12 @@ export function DocumentDialog({
                 <Pencil size={16} />
                 تعديل
               </button>
-              <button className="button danger-button" disabled={busy || preview} onClick={() => setConfirm(true)}>
-                <Trash2 size={16} />
-                حذف
-              </button>
+              {developer && (
+                <button className="button danger-button" disabled={busy || preview} onClick={() => setConfirm(true)}>
+                  <Trash2 size={16} />
+                  حذف
+                </button>
+              )}
             </>
           )}
         </div>
@@ -171,7 +178,7 @@ export function DocumentDialog({
                 </div>
               );
             })}
-            {REVIEWER_ROLE_IDS.includes(user.roleId) && (
+            {REVIEWER_ROLE_IDS.includes(user.roleId) && !archived && (
               <form className="review-form form-stack" onSubmit={review}>
                 <h3>{myReview ? 'تحديث مراجعتك' : 'أضف مراجعتك'}</h3>
                 <label>

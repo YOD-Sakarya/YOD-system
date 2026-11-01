@@ -1,8 +1,21 @@
-import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 export type Actor = { userId: number; roleId: number; fullName: string; roleName: string };
+/** The developer administers the whole system: users, cycles, deletions and storage. */
+export const DEVELOPER_ROLE_ID = 11;
+export const isDeveloper = (user: Actor) => user.roleId === DEVELOPER_ROLE_ID;
+/** Only these roles' reviews count towards a proposal's outcome. */
 export const canReview = (user: Actor) => [1, 3, 4].includes(user.roleId);
-export const canManageVotes = (user: Actor) => [1, 3].includes(user.roleId);
-export const canEditDocument = (user: Actor, ownerId: number) => user.userId === ownerId || canReview(user);
+export const canManageVotes = (user: Actor) => [1, 3].includes(user.roleId) || isDeveloper(user);
+export const canEditDocument = (user: Actor, ownerId: number) =>
+  user.userId === ownerId || canReview(user) || isDeveloper(user);
+/** Deleting documents and vote sessions is reserved for the developer. */
+export const canDelete = isDeveloper;
+/**
+ * Fingerprint of a stored password hash. It is embedded in session cookies, so changing a user's
+ * password (for example when the seat is handed to a new person) signs out every existing session.
+ */
+export const sessionVersion = (passwordHash: string) =>
+  createHash('sha256').update(passwordHash).digest('hex').slice(0, 16);
 export function reviewStatus(reviews: { role: number; decision: string }[]) {
   if (![1, 3, 4].every(role => reviews.some(review => review.role === role))) return 'قيد المراجعة';
   return reviews.filter(review => [1, 3, 4].includes(review.role)).every(review => review.decision === 'مقبول')

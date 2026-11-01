@@ -5,7 +5,7 @@ import { config } from '../config.js';
 import { cookieOptions, JWT_AUDIENCE, JWT_ISSUER, SESSION_COOKIE } from '../http/authenticate.js';
 import type { AppContext } from '../http/context.js';
 import { fail, HttpError } from '../http/errors.js';
-import { type Actor, hashPassword, verifyPassword } from '../security.js';
+import { type Actor, hashPassword, sessionVersion, verifyPassword } from '../security.js';
 import { loginSchema, registerSchema } from '../schemas.js';
 
 const SESSION_SECONDS = 24 * 60 * 60;
@@ -48,7 +48,7 @@ export function publicAuthRoutes({ query, transaction, authProvider }: AppContex
     if (!user || user.password.startsWith(NEON_MANAGED_PREFIX) || !verifyPassword(body.password, user.password))
       fail(401, 'اسم المستخدم أو كلمة المرور غير صحيحة.');
     const actor: Actor = { userId: user.userId, fullName: user.fullName, roleId: user.roleId, roleName: user.roleName };
-    const token = jwt.sign({ sub: String(actor.userId) }, config.jwtSecret, {
+    const token = jwt.sign({ sub: String(actor.userId), ver: sessionVersion(user.password) }, config.jwtSecret, {
       expiresIn: SESSION_SECONDS,
       issuer: JWT_ISSUER,
       audience: JWT_AUDIENCE,

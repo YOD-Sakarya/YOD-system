@@ -1,24 +1,43 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { isDeveloper } from './lib/roles';
+import { AdminPage } from './pages/AdminPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { CommitteesPage } from './pages/CommitteesPage';
 import { DocumentsPage } from './pages/DocumentsPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { VotesPage } from './pages/VotesPage';
-import type { Data, Document, User, VoteSession } from './types';
+import type { Data, Document, StorageReport, User, VoteSession } from './types';
 
 type Props = {
+  /** Data already narrowed to the cycle being viewed. */
   data: Data;
   user: User;
   query: string;
   loading: boolean;
+  /** Browsing a finished cycle: hide the create buttons. */
+  readOnly: boolean;
+  storage: { report: StorageReport | null; error: string; loading: boolean; reload: () => void };
   onUpload: () => void;
   onCreateSession: () => void;
   onDocument: (document: Document) => void;
   onVote: (session: VoteSession) => void;
+  onCyclesChanged: () => Promise<void>;
 };
 
 /** Route table for the signed-in workspace. Unknown paths fall back to the overview. */
-export function WorkspaceRoutes({ data, user, query, loading, onUpload, onCreateSession, onDocument, onVote }: Props) {
+export function WorkspaceRoutes({
+  data,
+  user,
+  query,
+  loading,
+  readOnly,
+  storage,
+  onUpload,
+  onCreateSession,
+  onDocument,
+  onVote,
+  onCyclesChanged,
+}: Props) {
   return (
     <Routes>
       <Route
@@ -29,6 +48,7 @@ export function WorkspaceRoutes({ data, user, query, loading, onUpload, onCreate
             user={user}
             query={query}
             loading={loading}
+            readOnly={readOnly}
             onUpload={onUpload}
             onDocument={onDocument}
             onVote={onVote}
@@ -44,6 +64,7 @@ export function WorkspaceRoutes({ data, user, query, loading, onUpload, onCreate
             data={data}
             query={query}
             loading={loading}
+            readOnly={readOnly}
             onUpload={onUpload}
             onDocument={onDocument}
           />
@@ -58,6 +79,7 @@ export function WorkspaceRoutes({ data, user, query, loading, onUpload, onCreate
             query={query}
             loading={loading}
             reviews
+            readOnly={readOnly}
             onUpload={onUpload}
             onDocument={onDocument}
           />
@@ -65,10 +87,25 @@ export function WorkspaceRoutes({ data, user, query, loading, onUpload, onCreate
       />
       <Route
         path="/votes"
-        element={<VotesPage data={data} query={query} user={user} onCreate={onCreateSession} onSelect={onVote} />}
+        element={
+          <VotesPage
+            data={data}
+            query={query}
+            user={user}
+            readOnly={readOnly}
+            onCreate={onCreateSession}
+            onSelect={onVote}
+          />
+        }
       />
       <Route path="/calendar" element={<CalendarPage data={data} query={query} onDocument={onDocument} />} />
       <Route path="/committees" element={<CommitteesPage data={data} query={query} />} />
+      {isDeveloper(user) && (
+        <Route
+          path="/admin"
+          element={<AdminPage data={data} query={query} storage={storage} onCyclesChanged={onCyclesChanged} />}
+        />
+      )}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

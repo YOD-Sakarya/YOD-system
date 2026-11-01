@@ -24,6 +24,7 @@ export function OverviewPage({
   query,
   loading,
   onUpload,
+  readOnly = false,
   onDocument,
   onVote,
 }: {
@@ -32,6 +33,7 @@ export function OverviewPage({
   query: string;
   loading: boolean;
   onUpload: () => void;
+  readOnly?: boolean;
   onDocument: (d: Document) => void;
   onVote: (s: VoteSession) => void;
 }) {
@@ -90,10 +92,12 @@ export function OverviewPage({
         title={`أهلًا، ${user.fullName.split(' ')[0]}`}
         description="إليك ما يجري في الاتحاد. لنُكمل ما بدأناه معًا."
         action={
-          <button className="button primary" onClick={onUpload}>
-            <Plus size={18} />
-            إضافة مستند
-          </button>
+          !readOnly && (
+            <button className="button primary" onClick={onUpload}>
+              <Plus size={18} />
+              إضافة مستند
+            </button>
+          )
         }
       />
       <div className="stats-grid">

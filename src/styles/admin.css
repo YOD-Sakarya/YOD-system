@@ -1,0 +1,102 @@
+/* Developer console: storage bars, cycle switcher and the archive banner. */
+.usage-list {
+  display: grid;
+  gap: 22px;
+  padding: 22px;
+}
+.usage {
+  --usage-color: var(--green);
+  display: grid;
+  gap: 8px;
+}
+.usage-warning {
+  --usage-color: #b7791f;
+}
+.usage-critical,
+.usage-full {
+  --usage-color: var(--red);
+}
+.usage-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.usage-head span,
+.usage small {
+  color: var(--muted);
+}
+.usage small {
+  font-size: 11px;
+}
+.usage-track {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: #e9edf3;
+  overflow: hidden;
+}
+.usage-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--usage-color);
+  transition: width 0.3s;
+}
+
+/* Compact bar in the top bar (developer only). */
+.storage-alert {
+  --usage-color: var(--green);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--usage-color);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.storage-alert.usage-warning {
+  --usage-color: #b7791f;
+}
+.storage-alert.usage-critical,
+.storage-alert.usage-full {
+  --usage-color: var(--red);
+  border-color: var(--red);
+}
+.storage-alert .usage-track {
+  width: 64px;
+  height: 6px;
+}
+.storage-alert-text {
+  font-weight: 650;
+}
+
+.cycle-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+.cycle-switcher select {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.archive-banner {
+  background: #fff7e6;
+  color: #7a4b00;
+  border-color: #f1d9a8;
+}
+
+@media (max-width: 850px) {
+  .storage-alert-text,
+  .storage-alert .usage-track {
+    display: none;
+  }
+}

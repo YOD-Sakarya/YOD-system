@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { DocumentDialog } from './components/dialogs/DocumentDialog';
@@ -6,22 +6,27 @@ import { DocumentForm } from './components/dialogs/DocumentForm';
 import { SessionForm } from './components/dialogs/SessionForm';
 import { VoteDialog } from './components/dialogs/VoteDialog';
 import { BootScreen } from './components/layout/BootScreen';
+import { ArchiveBanner } from './components/layout/ArchiveBanner';
+import { CycleSwitcher } from './components/layout/CycleSwitcher';
 import { PreviewBanner } from './components/layout/PreviewBanner';
 import { Sidebar } from './components/layout/Sidebar';
+import { StorageAlert } from './components/layout/StorageAlert';
 import { Toast } from './components/layout/Toast';
 import { Topbar } from './components/layout/Topbar';
 import { demoData, demoUser } from './data/demo';
-import { navigation } from './data/navigation';
+import { adminNavigation, navigation } from './data/navigation';
 import AuthEntry from './features/auth/AuthEntry';
 import { LegacyLoginScreen } from './features/auth/LegacyLoginScreen';
 import { useCurrentUser } from './hooks/useCurrentUser';
 import { useDialogs } from './hooks/useDialogs';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useToast } from './hooks/useToast';
+import { useStorageUsage } from './hooks/useStorageUsage';
 import { useWorkspaceData } from './hooks/useWorkspaceData';
 import { api } from './lib/api';
 import { signOutNeon } from './lib/auth';
-import type { User } from './types';
+import { isDeveloper } from './lib/roles';
+import type { Data, User } from './types';
 import { WorkspaceRoutes } from './WorkspaceRoutes';
 
 const PENDING_STATUS = 'قيد المراجعة';
@@ -43,6 +48,24 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
+
+  // Everyone browses one cycle at a time: the current one by default, or an archived year chosen in the top bar.
+  const [chosenCycleId, setChosenCycleId] = useState<number | null>(null);
+  const { cycles } = workspace.data;
+  const currentCycle = cycles.find(cycle => cycle.isCurrent);
+  const activeCycle = cycles.find(cycle => cycle.cycleId === chosenCycleId) ?? currentCycle;
+  const archived = !!activeCycle && !activeCycle.isCurrent;
+  const scopedData = useMemo<Data>(() => {
+    const all = workspace.data;
+    if (!activeCycle) return all;
+    return {
+      ...all,
+      documents: all.documents.filter(doc => doc.cycleId === activeCycle.cycleId),
+      votes: all.votes.filter(vote => vote.cycleId === activeCycle.cycleId),
+    };
+  }, [workspace.data, activeCycle]);
+  const developer = !!user && isDeveloper(user) && !preview;
+  const storage = useStorageUsage(developer);
 
   // api() raises this event on any 401 outside the login endpoints: drop all session-bound state.
   useEffect(() => {
@@ -112,9 +135,10 @@ export default function App() {
     );
   }
 
-  const { data, loading } = workspace;
+  const { loading } = workspace;
+  const data = scopedData;
   const pendingReviews = data.documents.filter(doc => doc.status === PENDING_STATUS).length;
-  const title = navigation.find(item => item.to === location.pathname)?.label || 'مساحة العمل';
+  const title = [...navigation, adminNavigation].find(item => item.to === location.pathname)?.label || 'مساحة العمل';
 
   return (
     <div className="workspace" dir="rtl">
@@ -137,8 +161,17 @@ export default function App() {
           sidebarOpen={sidebarOpen}
           onQueryChange={setQuery}
           onOpenSidebar={() => setSidebarOpen(true)}
+          actions={
+            <>
+              {developer && <StorageAlert report={storage.report} />}
+              <CycleSwitcher cycles={cycles} value={activeCycle?.cycleId ?? null} onChange={setChosenCycleId} />
+            </>
+          }
         />
         {preview && <PreviewBanner onLogin={logout} />}
+        {archived && activeCycle && (
+          <ArchiveBanner name={activeCycle.name} onBack={() => setChosenCycleId(currentCycle?.cycleId ?? null)} />
+        )}
         <main className="main-content" id="main-content" aria-busy={loading}>
           {error && (
             <div role="alert" className="error-banner">
@@ -150,6 +183,9 @@ export default function App() {
             </div>
           )}
           <WorkspaceRoutes
+            readOnly={archived}
+            storage={storage}
+            onCyclesChanged={workspace.reload}
             data={data}
             user={user}
             query={query}
@@ -168,6 +204,7 @@ export default function App() {
       {toast && <Toast message={toast} onClose={clearToast} />}
       {dialogs.viewedDocument && (
         <DocumentDialog
+          archived={archived}
           document={dialogs.viewedDocument}
           user={user}
           preview={preview}
@@ -189,6 +226,7 @@ export default function App() {
       {dialogs.showSession && <SessionForm preview={preview} onClose={dialogs.closeSession} onSaved={handleSaved} />}
       {dialogs.voteSession && (
         <VoteDialog
+          archived={archived}
           session={dialogs.voteSession}
           user={user}
           preview={preview}

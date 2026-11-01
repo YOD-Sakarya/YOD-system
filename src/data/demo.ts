@@ -63,6 +63,7 @@ export const demoData: Data = {
     status: String(status),
     eventDate: relative(Number(offset)),
     createdAt: relative(-i),
+    cycleId: 1,
     reviews:
       Number(type) === 1
         ? (status === 'مقبول' ? [1, 3, 4] : [1]).map((roleId, j) => ({
@@ -77,6 +78,17 @@ export const demoData: Data = {
           }))
         : [],
   })),
+  cycles: [
+    {
+      cycleId: 1,
+      name: '2026/2027',
+      startDate: '2026-09-01',
+      endDate: null,
+      isCurrent: true,
+      documentCount: 8,
+      voteCount: 2,
+    },
+  ],
   votes: [
     {
       sessionId: 1,
@@ -84,6 +96,7 @@ export const demoData: Data = {
       description: 'اختيار الموعد الأنسب لإقامة الملتقى، بما يتناسب مع الجدول الدراسي للطلاب.',
       status: 'مفتوحة',
       decision: null,
+      cycleId: 1,
       createdByUserId: 1,
       createdByName: 'رئيس الهيئة التنفيذية',
       createdAt: relative(-1),
@@ -101,6 +114,7 @@ export const demoData: Data = {
       description: 'التصويت على خطة الأنشطة الثقافية والرياضية لهذا الفصل.',
       status: 'مغلقة',
       decision: 'موافق',
+      cycleId: 1,
       createdByUserId: 3,
       createdByName: 'أمين عام',
       createdAt: relative(-9),

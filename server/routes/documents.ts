@@ -3,7 +3,8 @@ import { documentSql } from '../db.js';
 import type { AppContext } from '../http/context.js';
 import { fail, id } from '../http/errors.js';
 import { documentSchema } from '../schemas.js';
-import { canEditDocument } from '../security.js';
+import { DEVELOPER_ROLE_ID, canDelete, canEditDocument, isDeveloper } from '../security.js';
+import { ARCHIVED_MESSAGE, getCurrentCycleId } from '../services/cycles.js';
 import { saveFile, sendDocument, upload } from '../services/storage.js';
 
 const STATUS_PENDING = 'قيد المراجعة';
@@ -22,8 +23,9 @@ export function documentRoutes({ query, transaction }: AppContext) {
     return doc || fail(404, 'المستند غير موجود.');
   }
 
-  /** A role may only create document types listed in RoleDocPerms. */
+  /** A role may only create document types listed in RoleDocPerms; the developer may create any type. */
   async function assertTypeAllowed(roleId: number, docTypeId: number) {
+    if (roleId === DEVELOPER_ROLE_ID) return;
     const allowed = await query('SELECT 1 FROM "RoleDocPerms" WHERE "RoleId"=$1 AND "DocTypeId"=$2', [
       roleId,
       docTypeId,
@@ -42,11 +44,13 @@ export function documentRoutes({ query, transaction }: AppContext) {
   router.post('/', upload.single('file'), async (req, res) => {
     const body = documentSchema.parse(req.body);
     await assertTypeAllowed(req.actor.roleId, body.docTypeId);
+    // New documents always belong to the current cycle.
+    const cycleId = await getCurrentCycleId(query);
     if (!req.file) fail(400, 'اختر ملفًا لإرفاقه.');
     const filePath = await saveFile(req.file!);
     const [doc] = await query(
-      `INSERT INTO "Documents" ("OwnerUserId","DocTypeId","Title","EventDate","Status","QuarterId","FilePath","CreatedAt")
-        VALUES ($1,$2,$3,$4,$5,$6,$7,NOW()) RETURNING "DocId" AS "docId"`,
+      `INSERT INTO "Documents" ("OwnerUserId","DocTypeId","Title","EventDate","Status","QuarterId","FilePath","CycleId","CreatedAt")
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW()) RETURNING "DocId" AS "docId"`,
       [
         req.actor.userId,
         body.docTypeId,
@@ -55,6 +59,7 @@ export function documentRoutes({ query, transaction }: AppContext) {
         initialStatus(body.docTypeId),
         body.quarterId,
         filePath,
+        cycleId,
       ],
     );
     res.status(201).json(doc);
@@ -65,6 +70,8 @@ export function documentRoutes({ query, transaction }: AppContext) {
     const doc = await getDocument(docId);
     const body = documentSchema.parse(req.body);
     if (!canEditDocument(req.actor, doc.OwnerUserId)) fail(403, 'ليس لديك صلاحية تعديل هذا المستند.');
+    // Documents of finished cycles are read-only; only the developer can still change them.
+    if (!isDeveloper(req.actor) && doc.CycleId !== (await getCurrentCycleId(query))) fail(403, ARCHIVED_MESSAGE);
     // Type permissions follow the owner's role, not the editor's.
     const [owner] = await query('SELECT "RoleId" AS "roleId" FROM "Users" WHERE "UserId"=$1', [doc.OwnerUserId]);
     await assertTypeAllowed(owner.roleId, body.docTypeId);
@@ -83,7 +90,7 @@ export function documentRoutes({ query, transaction }: AppContext) {
   router.delete('/:id', async (req, res) => {
     const docId = id(req.params.id);
     const doc = await getDocument(docId);
-    if (!canEditDocument(req.actor, doc.OwnerUserId)) fail(403, 'ليس لديك صلاحية حذف هذا المستند.');
+    if (!canDelete(req.actor)) fail(403, 'حذف المستندات متاح للمطوّر فقط.');
     await query('DELETE FROM "Documents" WHERE "DocId"=$1', [docId]);
     // Retain cloud assets for recovery; database deletion does not destroy a remote file.
     res.sendStatus(204);

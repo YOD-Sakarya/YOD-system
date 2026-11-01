@@ -5,11 +5,16 @@ import jwt from 'jsonwebtoken';
 import { createApp } from './app.js';
 import { config } from './config.js';
 import { query, transaction } from './db.js';
-import { hashPassword, type Actor } from './security.js';
+import { hashPassword, sessionVersion, type Actor } from './security.js';
 type Query = (sql: string, values?: unknown[]) => Promise<Record<string, unknown>[]>;
 const member: Actor = { userId: 25, fullName: 'Test user', roleId: 7, roleName: 'Activities' };
 const signature = { issuer: 'yod-express', audience: 'yod-react' };
-const token = () => jwt.sign({ sub: String(member.userId) }, config.jwtSecret, { ...signature, expiresIn: '1m' });
+const storedHash = 'stored-password-hash';
+const token = () =>
+  jwt.sign({ sub: String(member.userId), ver: sessionVersion(storedHash) }, config.jwtSecret, {
+    ...signature,
+    expiresIn: '1m',
+  });
 async function withServer(
   run: (base: string) => Promise<void>,
   database: Query = async () => {
@@ -82,7 +87,7 @@ test('invalid, expired and wrong-audience sessions cannot authenticate', async (
   await withServer(async base => {
     const cookies = [
       'invalid-token',
-      jwt.sign({ sub: '25' }, config.jwtSecret, { ...signature, expiresIn: -1 }),
+      jwt.sign({ sub: '25', ver: sessionVersion(storedHash) }, config.jwtSecret, { ...signature, expiresIn: -1 }),
       jwt.sign({ sub: '25' }, config.jwtSecret, { issuer: signature.issuer, audience: 'other-app' }),
     ];
     for (const cookie of cookies) {
@@ -128,7 +133,7 @@ test('current role comes from database and committee members cannot review or cr
     },
     async sql => {
       assert.match(sql, /WHERE u\."UserId"=\$1/);
-      return [member];
+      return [{ ...member, passwordHash: storedHash }];
     },
   );
 });
@@ -149,7 +154,7 @@ test('malformed document filters cannot reach SQL, and valid filters stay parame
         calls.push(values || []);
         return [];
       }
-      return [member];
+      return [{ ...member, passwordHash: storedHash }];
     },
   );
 });

@@ -4,7 +4,8 @@ import { sessionsSql } from '../db.js';
 import type { AppContext } from '../http/context.js';
 import { fail, id } from '../http/errors.js';
 import { ballotSchema, voteSessionSchema } from '../schemas.js';
-import { type Actor, canManageVotes, voteDecision } from '../security.js';
+import { type Actor, canDelete, canManageVotes, voteDecision } from '../security.js';
+import { ARCHIVED_MESSAGE, getCurrentCycleId } from '../services/cycles.js';
 
 const STATUS_OPEN = 'مفتوحة';
 const STATUS_CLOSED = 'مغلقة';
@@ -32,12 +33,14 @@ export function voteRoutes({ query, transaction }: AppContext) {
     if (!canManageVotes(req.actor)) fail(403, 'إنشاء الجلسات متاح للرئيس والأمين العام.');
     const body = voteSessionSchema.parse(req.body);
     if (body.closeAt && Date.parse(body.closeAt) <= Date.now()) fail(400, 'اختر موعد إغلاق في المستقبل.');
+    // New sessions belong to the current cycle.
+    const cycleId = await getCurrentCycleId(query);
     const sessionId = await transaction(async client => {
       const session = (
         await client.query(
-          `INSERT INTO "VoteSessions" ("Title","Description","CreatedByUserId","CreatedAt","ClosedAt","Status")
-            VALUES ($1,$2,$3,NOW(),$4,$5) RETURNING "VoteSessionId" AS id`,
-          [body.title, body.description, req.actor.userId, body.closeAt || null, STATUS_OPEN],
+          `INSERT INTO "VoteSessions" ("Title","Description","CreatedByUserId","CreatedAt","ClosedAt","Status","CycleId")
+            VALUES ($1,$2,$3,NOW(),$4,$5,$6) RETURNING "VoteSessionId" AS id`,
+          [body.title, body.description, req.actor.userId, body.closeAt || null, STATUS_OPEN, cycleId],
         )
       ).rows[0];
       for (const option of body.options)
@@ -54,6 +57,9 @@ export function voteRoutes({ query, transaction }: AppContext) {
       const session = await lockSession(client, sessionId);
       const expired = session.ClosedAt && new Date(session.ClosedAt).getTime() <= Date.now();
       if (session.Status !== STATUS_OPEN || expired) fail(409, 'انتهت جلسة التصويت.');
+      // Sessions of finished cycles no longer accept votes.
+      const current = (await client.query('SELECT "CycleId" FROM "Cycles" WHERE "IsCurrent"')).rows[0];
+      if (!current || session.CycleId !== current.CycleId) fail(409, ARCHIVED_MESSAGE);
       const option = await client.query('SELECT 1 FROM "VoteOptions" WHERE "VoteOptionId"=$1 AND "VoteSessionId"=$2', [
         body.optionId,
         sessionId,
@@ -95,10 +101,11 @@ export function voteRoutes({ query, transaction }: AppContext) {
   });
 
   router.delete('/:id', async (req, res) => {
+    // Checked before touching the database: only the developer deletes sessions.
+    if (!canDelete(req.actor)) fail(403, 'حذف الجلسات متاح للمطوّر فقط.');
     const sessionId = id(req.params.id);
     await transaction(async client => {
       const session = await lockSession(client, sessionId);
-      if (!canManageSession(req.actor, session)) fail(403, 'ليس لديك صلاحية حذف الجلسة.');
       // Delete children first: votes and options reference the session.
       await client.query('DELETE FROM "Votes" WHERE "VoteSessionId"=$1', [sessionId]);
       await client.query('DELETE FROM "VoteOptions" WHERE "VoteSessionId"=$1', [sessionId]);

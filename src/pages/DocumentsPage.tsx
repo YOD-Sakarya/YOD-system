@@ -15,6 +15,7 @@ export function DocumentsPage({
   loading,
   reviews = false,
   onUpload,
+  readOnly = false,
   onDocument,
 }: {
   data: Data;
@@ -22,6 +23,7 @@ export function DocumentsPage({
   loading: boolean;
   reviews?: boolean;
   onUpload: () => void;
+  readOnly?: boolean;
   onDocument: (d: Document) => void;
 }) {
   const location = useLocation(),
@@ -56,7 +58,8 @@ export function DocumentsPage({
             : 'وثائق الاتحاد، منظّمة حسب اللجان ونوع المستند.'
         }
         action={
-          !reviews && (
+          !reviews &&
+          !readOnly && (
             <button className="button primary" onClick={onUpload}>
               <Plus size={18} />
               إضافة مستند

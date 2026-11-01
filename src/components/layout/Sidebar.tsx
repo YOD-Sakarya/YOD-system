@@ -1,10 +1,10 @@
 import { useRef } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { ChevronLeft, LogOut, ShieldCheck, Users, X } from 'lucide-react';
-import { navigation } from '../../data/navigation';
+import { adminNavigation, navigation } from '../../data/navigation';
 import { useSidebarPanel } from '../../hooks/useSidebarPanel';
 import { number } from '../../lib/format';
-import { isCommitteeRole } from '../../lib/roles';
+import { isCommitteeRole, isDeveloper } from '../../lib/roles';
 import type { Catalog, User } from '../../types';
 import { Brand } from '../ui/Brand';
 
@@ -24,6 +24,7 @@ export function Sidebar({ user, roles, pendingReviews, open, mobile, onClose, on
   const location = useLocation();
   const selectedRole = new URLSearchParams(location.search).get('role');
   const committees = roles.filter(isCommitteeRole);
+  const items = isDeveloper(user) ? [...navigation, adminNavigation] : navigation;
   // Focus trap and scroll lock only apply while the mobile panel is open.
   useSidebarPanel(panelRef, open && mobile, onClose);
 
@@ -53,7 +54,7 @@ export function Sidebar({ user, roles, pendingReviews, open, mobile, onClose, on
         <ShieldCheck size={17} />
       </div>
       <nav aria-label="التنقل الرئيسي">
-        {navigation.map(item => (
+        {items.map(item => (
           <NavLink key={item.to} to={item.to} end={item.to === '/'}>
             <item.icon size={19} />
             <span>{item.label}</span>

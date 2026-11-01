@@ -2,6 +2,7 @@ import { ChevronLeft, Users } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { PageHeading } from '../components/ui/PageHeading';
 import { number } from '../lib/format';
+import { isDeveloper } from '../lib/roles';
 import type { Data } from '../types';
 
 /** Committees with their document counts and which document types each may create. */
@@ -14,7 +15,7 @@ export function CommitteesPage({ data, query }: { data: Data; query: string }) {
       />
       <div className="committees-grid">
         {data.catalog.roles
-          .filter(r => r.roleName.includes(query))
+          .filter(r => !isDeveloper(r) && r.roleName.includes(query))
           .map(r => (
             <section className="panel committee-card" key={r.roleId}>
               <div className="committee-card-top">

@@ -3,6 +3,7 @@ import type { AppContext } from '../http/context.js';
 import { fail } from '../http/errors.js';
 import { reviewSchema } from '../schemas.js';
 import { canReview, reviewStatus } from '../security.js';
+import { ARCHIVED_MESSAGE } from '../services/cycles.js';
 
 const PROPOSAL_TYPE_ID = 1;
 /** Roles whose reviews count towards a proposal's outcome: president, secretary general, financial officer. */
@@ -21,6 +22,9 @@ export function reviewRoutes({ transaction }: AppContext) {
         .rows[0];
       if (!doc) fail(404, 'المستند غير موجود.');
       if (doc.DocTypeId !== PROPOSAL_TYPE_ID) fail(400, 'المراجعة متاحة لوثائق التصور فقط.');
+      // Proposals of finished cycles keep the outcome they were archived with.
+      const current = (await client.query('SELECT "CycleId" FROM "Cycles" WHERE "IsCurrent"')).rows[0];
+      if (!current || doc.CycleId !== current.CycleId) fail(409, ARCHIVED_MESSAGE);
       // Replace this reviewer's previous review, if any.
       await client.query('DELETE FROM "Reviews" WHERE "DocId"=$1 AND "ReviewerUserId"=$2', [
         body.documentId,

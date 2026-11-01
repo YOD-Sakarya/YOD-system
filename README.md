@@ -228,3 +228,26 @@ serverless function (`api/index.ts`) behind the `/api/*` rewrite in `vercel.json
 
 Limitation: Vercel functions accept request bodies up to about 4.5 MB, so document uploads larger than that
 fail on Vercel even though the API itself allows 100 MB. Larger files need browser-to-Cloudinary signed uploads.
+
+## Developer role and yearly cycles
+
+- **Developer (role 11)** administers the whole system from `/admin`: add users or hand a seat to a new person
+  (edit the account in place), start a new yearly cycle, and watch storage. Only the developer can delete documents
+  and vote sessions.
+- **Cycles.** Every document and vote session belongs to a cycle (union year). Only the current cycle accepts new
+  uploads, votes and reviews; earlier cycles stay visible to everyone but read-only. Starting a new cycle never
+  deletes anything.
+- **Storage bar.** The developer sees file storage (Cloudinary) and database size (Neon) in the top bar, with
+  warnings at 75 % and 90 %. Limits default to 25 GB / 512 MB; override with `STORAGE_CLOUDINARY_LIMIT_GB` and
+  `STORAGE_DB_LIMIT_MB`.
+
+First-time setup after pulling this version:
+
+```bash
+npm run db:upgrade        # adds cycles + developer role; existing data becomes the 2025/2026 archive
+DEV_USERNAME=... DEV_EMAIL=... DEV_FULLNAME=... DEV_PASSWORD=... npm run create-developer
+```
+
+Handing a seat to a new person: edit the user, change name/username/email and set a new password. The old password
+and any open sessions stop working. In Neon-auth mode the previous person's identity is unlinked, and the new person
+signs up with the new email.

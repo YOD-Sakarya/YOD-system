@@ -13,12 +13,14 @@ export function VotesPage({
   query,
   user,
   onCreate,
+  readOnly = false,
   onSelect,
 }: {
   data: Data;
   query: string;
   user: User;
   onCreate: () => void;
+  readOnly?: boolean;
   onSelect: (s: VoteSession) => void;
 }) {
   const [filter, setFilter] = useState('all');
@@ -33,6 +35,7 @@ export function VotesPage({
         title="جلسات التصويت"
         description="قرارات واضحة، ومشاركة تُحدث فرقًا."
         action={
+          !readOnly &&
           VOTE_MANAGER_ROLE_IDS.includes(user.roleId) && (
             <button className="button primary" onClick={onCreate}>
               <Plus size={18} />

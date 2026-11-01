@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Check, LoaderCircle, UploadCloud } from 'lucide-react';
 import { api } from '../../lib/api';
+import { isDeveloper } from '../../lib/roles';
 import type { Catalog, Document, User } from '../../types';
 import { Modal } from '../ui/Modal';
 import { errorText, PreviewNote, type DialogProps } from './shared';
@@ -17,9 +18,12 @@ export function DocumentForm({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
     [filename, setFilename] = useState('');
-  const types = catalog.types.filter(t =>
-    catalog.permissions.some(p => p.roleId === (doc?.roleId || user.roleId) && p.docTypeId === t.docTypeId),
-  );
+  // The developer may create any document type; other roles only the types granted to their role.
+  const types = isDeveloper(user)
+    ? catalog.types
+    : catalog.types.filter(t =>
+        catalog.permissions.some(p => p.roleId === (doc?.roleId || user.roleId) && p.docTypeId === t.docTypeId),
+      );
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (preview) return;

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { LoaderCircle, Trash2 } from 'lucide-react';
 import { api, json } from '../../lib/api';
 import { date, number } from '../../lib/format';
-import { VOTE_MANAGER_ROLE_IDS } from '../../lib/roles';
+import { VOTE_MANAGER_ROLE_IDS, isDeveloper } from '../../lib/roles';
 import { isOpen } from '../../lib/votes';
 import type { User, VoteSession } from '../../types';
 import { Modal } from '../ui/Modal';
@@ -13,15 +13,17 @@ export function VoteDialog({
   session: s,
   user,
   preview,
+  archived,
   onClose,
   onSaved,
-}: DialogProps & { session: VoteSession; user: User }) {
+}: DialogProps & { session: VoteSession; user: User; archived: boolean }) {
   const [selected, setSelected] = useState(s.myOptionId || 0),
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false),
     [confirm, setConfirm] = useState('');
   const [comment, setComment] = useState(s.myComment || '');
-  const open = isOpen(s),
+  // Sessions of a finished cycle no longer accept votes.
+  const open = isOpen(s) && !archived,
     manage = VOTE_MANAGER_ROLE_IDS.includes(user.roleId) || s.createdByUserId === user.userId;
   async function action(kind: 'vote' | 'close' | 'delete') {
     if (preview) return;
@@ -113,10 +115,12 @@ export function VoteDialog({
                 إغلاق الجلسة واعتماد النتيجة
               </button>
             )}
-            <button className="button danger-button" disabled={busy || preview} onClick={() => setConfirm('delete')}>
-              <Trash2 size={16} />
-              حذف الجلسة
-            </button>
+            {isDeveloper(user) && (
+              <button className="button danger-button" disabled={busy || preview} onClick={() => setConfirm('delete')}>
+                <Trash2 size={16} />
+                حذف الجلسة
+              </button>
+            )}
           </div>
         )}
         {confirm && (

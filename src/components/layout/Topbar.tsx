@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { ChevronLeft, Menu, Search } from 'lucide-react';
 import type { User } from '../../types';
 
@@ -8,10 +9,12 @@ type Props = {
   sidebarOpen: boolean;
   onQueryChange: (query: string) => void;
   onOpenSidebar: () => void;
+  /** Extra controls before the search box (cycle switcher, storage bar). */
+  actions?: ReactNode;
 };
 
 /** Breadcrumb, workspace-wide search box and user avatar. */
-export function Topbar({ title, user, query, sidebarOpen, onQueryChange, onOpenSidebar }: Props) {
+export function Topbar({ title, user, query, sidebarOpen, onQueryChange, onOpenSidebar, actions }: Props) {
   return (
     <header className="topbar">
       <div className="breadcrumb">
@@ -29,6 +32,7 @@ export function Topbar({ title, user, query, sidebarOpen, onQueryChange, onOpenS
         <strong>{title}</strong>
       </div>
       <div className="topbar-actions">
+        {actions}
         <label className="global-search">
           <Search size={17} />
           <input
