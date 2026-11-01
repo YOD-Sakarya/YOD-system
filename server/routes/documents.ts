@@ -44,8 +44,14 @@ export function documentRoutes({ query, transaction }: AppContext) {
   router.post('/', upload.single('file'), async (req, res) => {
     const body = documentSchema.parse(req.body);
     await assertTypeAllowed(req.actor.roleId, body.docTypeId);
-    // New documents always belong to the current cycle.
-    const cycleId = await getCurrentCycleId(query);
+    // New documents belong to the current cycle; the developer may target another (archived) cycle.
+    const requested = Number(req.body.cycleId);
+    let cycleId = await getCurrentCycleId(query);
+    if (isDeveloper(req.actor) && Number.isInteger(requested) && requested > 0 && requested !== cycleId) {
+      const exists = await query('SELECT 1 FROM "Cycles" WHERE "CycleId"=$1', [requested]);
+      if (!exists.length) fail(400, 'العام غير موجود.');
+      cycleId = requested;
+    }
     if (!req.file) fail(400, 'اختر ملفًا لإرفاقه.');
     const filePath = await saveFile(req.file!);
     const [doc] = await query(

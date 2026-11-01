@@ -170,7 +170,11 @@ export default function App() {
         />
         {preview && <PreviewBanner onLogin={logout} />}
         {archived && activeCycle && (
-          <ArchiveBanner name={activeCycle.name} onBack={() => setChosenCycleId(currentCycle?.cycleId ?? null)} />
+          <ArchiveBanner
+            name={activeCycle.name}
+            editable={isDeveloper(user)}
+            onBack={() => setChosenCycleId(currentCycle?.cycleId ?? null)}
+          />
         )}
         <main className="main-content" id="main-content" aria-busy={loading}>
           {error && (
@@ -183,7 +187,8 @@ export default function App() {
             </div>
           )}
           <WorkspaceRoutes
-            readOnly={archived}
+            // The developer can still add and change documents of a finished year.
+            readOnly={archived && !isDeveloper(user)}
             storage={storage}
             onCyclesChanged={workspace.reload}
             data={data}
@@ -218,6 +223,7 @@ export default function App() {
           document={dialogs.editedDocument}
           user={user}
           catalog={data.catalog}
+          cycleId={activeCycle?.cycleId}
           preview={preview}
           onClose={dialogs.closeUpload}
           onSaved={handleSaved}

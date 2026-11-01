@@ -11,10 +11,11 @@ export function DocumentForm({
   document: doc,
   user,
   catalog,
+  cycleId,
   preview,
   onClose,
   onSaved,
-}: DialogProps & { document: Document | null; user: User; catalog: Catalog }) {
+}: DialogProps & { document: Document | null; user: User; catalog: Catalog; cycleId?: number }) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
     [filename, setFilename] = useState('');
@@ -32,6 +33,8 @@ export function DocumentForm({
     const body = new FormData(event.currentTarget);
     const file = body.get('file');
     if (file instanceof File && !file.size) body.delete('file');
+    // Only the developer may choose the year; everyone else always uploads into the current cycle (server-enforced).
+    if (isDeveloper(user) && !doc && cycleId) body.set('cycleId', String(cycleId));
     if (file instanceof File && file.size > 100 * 1024 * 1024) {
       setError('الحد الأقصى للملف ١٠٠ ميجابايت.');
       setBusy(false);
