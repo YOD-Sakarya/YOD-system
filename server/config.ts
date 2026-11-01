@@ -6,15 +6,24 @@ dotenv.config({ path: path.join(root, '.env'), quiet: true });
 dotenv.config({ path: path.join(root, '..', 'Yod_System.env'), quiet: true });
 
 export function parseConnectionString(value: string) {
-  const pairs = Object.fromEntries(value.split(';').filter(Boolean).map(part => {
-    const equal = part.indexOf('=');
-    return [part.slice(0, equal).trim().toLowerCase(), part.slice(equal + 1).trim()];
-  }));
+  const pairs = Object.fromEntries(
+    value
+      .split(';')
+      .filter(Boolean)
+      .map(part => {
+        const equal = part.indexOf('=');
+        return [part.slice(0, equal).trim().toLowerCase(), part.slice(equal + 1).trim()];
+      }),
+  );
   return {
-    host: pairs.host, port: Number(pairs.port || 5432), database: pairs.database,
-    user: pairs.username, password: pairs.password,
+    host: pairs.host,
+    port: Number(pairs.port || 5432),
+    database: pairs.database,
+    user: pairs.username,
+    password: pairs.password,
     ssl: /require|verify/i.test(pairs['ssl mode'] || '')
-      ? { rejectUnauthorized: !/^true$/i.test(pairs['trust server certificate'] || '') } : undefined,
+      ? { rejectUnauthorized: !/^true$/i.test(pairs['trust server certificate'] || '') }
+      : undefined,
   };
 }
 function cloudinaryFromUrl(value: string | undefined) {
@@ -22,8 +31,14 @@ function cloudinaryFromUrl(value: string | undefined) {
   try {
     const url = new URL(value);
     if (url.protocol !== 'cloudinary:' || !url.hostname || !url.username || !url.password) throw new Error();
-    return { cloud_name: url.hostname, api_key: decodeURIComponent(url.username), api_secret: decodeURIComponent(url.password) };
-  } catch { throw new Error('CLOUDINARY_URL must contain a valid cloudinary://key:secret@cloud-name URL.'); }
+    return {
+      cloud_name: url.hostname,
+      api_key: decodeURIComponent(url.username),
+      api_secret: decodeURIComponent(url.password),
+    };
+  } catch {
+    throw new Error('CLOUDINARY_URL must contain a valid cloudinary://key:secret@cloud-name URL.');
+  }
 }
 const urlCloud = cloudinaryFromUrl(process.env.CLOUDINARY_URL);
 const authProvider = process.env.AUTH_PROVIDER || 'legacy';
@@ -34,7 +49,11 @@ function neonAuthUrl(value: string | undefined) {
     const url = new URL(value);
     if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) throw new Error();
     return url.toString().replace(/\/+$/, '');
-  } catch { throw new Error('NEON_AUTH_URL must be an HTTPS Managed Better Auth endpoint without credentials, query, or fragment.'); }
+  } catch {
+    throw new Error(
+      'NEON_AUTH_URL must be an HTTPS Managed Better Auth endpoint without credentials, query, or fragment.',
+    );
+  }
 }
 export const legacyCloud = {
   cloud_name: process.env.Cloudinary__CloudName,

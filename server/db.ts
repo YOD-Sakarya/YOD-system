@@ -1,15 +1,28 @@
 import pg from 'pg';
 import { config } from './config.js';
-export const pool = new pg.Pool({ ...config.database, max: 5, connectionTimeoutMillis: 15000, statement_timeout: 20000 });
+export const pool = new pg.Pool({
+  ...config.database,
+  max: 5,
+  connectionTimeoutMillis: 15000,
+  statement_timeout: 20000,
+});
 pool.on('error', () => console.error('PostgreSQL pool connection interrupted.'));
 export async function query<T extends pg.QueryResultRow = pg.QueryResultRow>(sql: string, params: unknown[] = []) {
   return (await pool.query<T>(sql, params)).rows;
 }
 export async function transaction<T>(work: (client: pg.PoolClient) => Promise<T>) {
   const client = await pool.connect();
-  try { await client.query('BEGIN'); const result = await work(client); await client.query('COMMIT'); return result; }
-  catch (error) { await client.query('ROLLBACK'); throw error; }
-  finally { client.release(); }
+  try {
+    await client.query('BEGIN');
+    const result = await work(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 export const documentSql = `SELECT d."DocId" AS "docId", d."Title" AS title,
  d."OwnerUserId" AS "ownerUserId", u."FullName" AS "ownerName", u."RoleId" AS "roleId",

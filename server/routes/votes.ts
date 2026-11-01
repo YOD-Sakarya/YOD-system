@@ -1,0 +1,111 @@
+import { Router } from 'express';
+import type { PoolClient } from 'pg';
+import { sessionsSql } from '../db.js';
+import type { AppContext } from '../http/context.js';
+import { fail, id } from '../http/errors.js';
+import { ballotSchema, voteSessionSchema } from '../schemas.js';
+import { type Actor, canManageVotes, voteDecision } from '../security.js';
+
+const STATUS_OPEN = 'مفتوحة';
+const STATUS_CLOSED = 'مغلقة';
+
+/** Loads and row-locks a session so concurrent votes, closes and deletes are applied one at a time. */
+async function lockSession(client: PoolClient, sessionId: number) {
+  const session = (await client.query('SELECT * FROM "VoteSessions" WHERE "VoteSessionId"=$1 FOR UPDATE', [sessionId]))
+    .rows[0];
+  return session || fail(404, 'الجلسة غير موجودة.');
+}
+
+/** Leadership or the session's creator may close or delete it. */
+const canManageSession = (actor: Actor, session: { CreatedByUserId: number }) =>
+  canManageVotes(actor) || session.CreatedByUserId === actor.userId;
+
+/** Vote sessions: create, vote (one changeable vote per member), close with a decision, delete. */
+export function voteRoutes({ query, transaction }: AppContext) {
+  const router = Router();
+
+  router.get('/', async (req, res) => {
+    res.json(await query(sessionsSql + ' ORDER BY s."CreatedAt" DESC', [req.actor.userId]));
+  });
+
+  router.post('/', async (req, res) => {
+    if (!canManageVotes(req.actor)) fail(403, 'إنشاء الجلسات متاح للرئيس والأمين العام.');
+    const body = voteSessionSchema.parse(req.body);
+    if (body.closeAt && Date.parse(body.closeAt) <= Date.now()) fail(400, 'اختر موعد إغلاق في المستقبل.');
+    const sessionId = await transaction(async client => {
+      const session = (
+        await client.query(
+          `INSERT INTO "VoteSessions" ("Title","Description","CreatedByUserId","CreatedAt","ClosedAt","Status")
+            VALUES ($1,$2,$3,NOW(),$4,$5) RETURNING "VoteSessionId" AS id`,
+          [body.title, body.description, req.actor.userId, body.closeAt || null, STATUS_OPEN],
+        )
+      ).rows[0];
+      for (const option of body.options)
+        await client.query('INSERT INTO "VoteOptions" ("Text","VoteSessionId") VALUES ($1,$2)', [option, session.id]);
+      return session.id;
+    });
+    res.status(201).json({ sessionId });
+  });
+
+  router.post('/:id/vote', async (req, res) => {
+    const sessionId = id(req.params.id);
+    const body = ballotSchema.parse(req.body);
+    await transaction(async client => {
+      const session = await lockSession(client, sessionId);
+      const expired = session.ClosedAt && new Date(session.ClosedAt).getTime() <= Date.now();
+      if (session.Status !== STATUS_OPEN || expired) fail(409, 'انتهت جلسة التصويت.');
+      const option = await client.query('SELECT 1 FROM "VoteOptions" WHERE "VoteOptionId"=$1 AND "VoteSessionId"=$2', [
+        body.optionId,
+        sessionId,
+      ]);
+      if (!option.rowCount) fail(400, 'خيار التصويت غير صالح.');
+      // Replace the member's previous vote so changing one's mind never double counts.
+      await client.query('DELETE FROM "Votes" WHERE "VoteSessionId"=$1 AND "VoterUserId"=$2', [
+        sessionId,
+        req.actor.userId,
+      ]);
+      await client.query(
+        'INSERT INTO "Votes" ("VoterUserId","VoteSessionId","VoteOptionId","Comment","VotedAt") VALUES ($1,$2,$3,$4,NOW())',
+        [req.actor.userId, sessionId, body.optionId, body.comment],
+      );
+    });
+    res.json({ message: 'تم حفظ صوتك.' });
+  });
+
+  router.put('/:id/close', async (req, res) => {
+    const sessionId = id(req.params.id);
+    await transaction(async client => {
+      const session = await lockSession(client, sessionId);
+      if (!canManageSession(req.actor, session)) fail(403, 'ليس لديك صلاحية إغلاق الجلسة.');
+      if (session.Status !== STATUS_OPEN) fail(409, 'الجلسة مغلقة بالفعل.');
+      const tally = (
+        await client.query(
+          `SELECT o."Text" AS text,count(v."VoteId")::int AS count FROM "VoteOptions" o
+            LEFT JOIN "Votes" v ON v."VoteOptionId"=o."VoteOptionId" WHERE o."VoteSessionId"=$1
+            GROUP BY o."VoteOptionId",o."Text" ORDER BY count DESC`,
+          [sessionId],
+        )
+      ).rows;
+      await client.query(
+        'UPDATE "VoteSessions" SET "Status"=$1,"ClosedAt"=NOW(),"Decision"=$2 WHERE "VoteSessionId"=$3',
+        [STATUS_CLOSED, voteDecision(tally), sessionId],
+      );
+    });
+    res.json({ message: 'تم إغلاق الجلسة.' });
+  });
+
+  router.delete('/:id', async (req, res) => {
+    const sessionId = id(req.params.id);
+    await transaction(async client => {
+      const session = await lockSession(client, sessionId);
+      if (!canManageSession(req.actor, session)) fail(403, 'ليس لديك صلاحية حذف الجلسة.');
+      // Delete children first: votes and options reference the session.
+      await client.query('DELETE FROM "Votes" WHERE "VoteSessionId"=$1', [sessionId]);
+      await client.query('DELETE FROM "VoteOptions" WHERE "VoteSessionId"=$1', [sessionId]);
+      await client.query('DELETE FROM "VoteSessions" WHERE "VoteSessionId"=$1', [sessionId]);
+    });
+    res.sendStatus(204);
+  });
+
+  return router;
+}

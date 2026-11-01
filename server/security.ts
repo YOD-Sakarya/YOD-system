@@ -5,7 +5,9 @@ export const canManageVotes = (user: Actor) => [1, 3].includes(user.roleId);
 export const canEditDocument = (user: Actor, ownerId: number) => user.userId === ownerId || canReview(user);
 export function reviewStatus(reviews: { role: number; decision: string }[]) {
   if (![1, 3, 4].every(role => reviews.some(review => review.role === role))) return 'قيد المراجعة';
-  return reviews.filter(review => [1, 3, 4].includes(review.role)).every(review => review.decision === 'مقبول') ? 'مقبول' : 'مرفوض';
+  return reviews.filter(review => [1, 3, 4].includes(review.role)).every(review => review.decision === 'مقبول')
+    ? 'مقبول'
+    : 'مرفوض';
 }
 export function voteDecision(options: { text: string; count: number }[]) {
   const ranked = [...options].sort((a, b) => b.count - a.count);
@@ -23,6 +25,7 @@ export function verifyPassword(password: string, stored: string) {
     return timingSafeEqual(scryptSync(password, salt, 64), Buffer.from(hash, 'hex'));
   }
   // Transitional support for legacy ASP.NET accounts; no remote data is rewritten at login.
-  const actual = Buffer.from(password), expected = Buffer.from(stored);
+  const actual = Buffer.from(password),
+    expected = Buffer.from(stored);
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
