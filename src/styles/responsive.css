@@ -136,13 +136,13 @@
   .sidebar .brand.compact strong span {
     font-size: 12px;
   }
-  /* Two-row top bar: menu + title + avatar, then year switcher, storage and a full-width search. */
+  /* Compact two-row top bar: [menu + title | year | avatar] then [storage | search]. */
   .topbar {
     height: auto;
-    min-height: 64px;
+    min-height: 56px;
     flex-wrap: wrap;
-    padding: 10px 20px;
-    gap: 10px 14px;
+    padding: 8px 20px;
+    gap: 8px 12px;
   }
   .topbar-actions {
     display: contents;
@@ -152,16 +152,19 @@
     flex: 1;
     min-width: 0;
   }
-  .topbar .avatar {
+  .cycle-switcher {
     order: 2;
   }
-  .cycle-switcher,
-  .storage-alert {
+  .topbar .avatar {
     order: 3;
   }
-  .search-box {
+  .storage-alert {
     order: 4;
-    flex: 1 1 100%;
+  }
+  .search-box {
+    order: 5;
+    flex: 1 1 150px;
+    min-width: 0;
   }
   .breadcrumb {
     gap: 8px;
@@ -675,7 +678,8 @@
 }
 /* Phones: document rows become cards instead of a sideways-scrolling table. */
 @media (max-width: 600px) {
-  .table-scroll {
+  /* Only the document list turns into cards; other tables (users, years) keep scrolling sideways inside their box. */
+  .table-scroll.cards-scroll {
     overflow: visible;
   }
   .document-table.cards,

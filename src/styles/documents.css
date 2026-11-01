@@ -1,6 +1,9 @@
 /* Document table, filters and pagination. */
 .table-scroll {
   overflow-x: auto;
+  /* Containing block for the absolutely positioned .sr-only labels inside the table; without it they escape
+     the scroll box and stretch the whole page sideways (a phantom horizontal scroll on phones). */
+  position: relative;
 }
 .document-table {
   border-collapse: collapse;

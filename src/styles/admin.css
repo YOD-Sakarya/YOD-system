@@ -125,3 +125,16 @@
   color: var(--red);
   background: #fdf1f2;
 }
+
+/* Panel headers (title + filter + action) wrap instead of squeezing on small screens. */
+.panel-heading {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.panel-heading .table-search {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.cycle-switcher select {
+  max-width: 100%;
+}

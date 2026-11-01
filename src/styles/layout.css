@@ -13,6 +13,22 @@
   display: flex;
   flex-direction: column;
   z-index: 30;
+  /* Only .sidebar-scroll scrolls, so the sidebar never shows two scrollbars. */
+  overflow: hidden;
+}
+.sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #d5dae3 transparent;
+  padding-bottom: 14px;
+}
+.sidebar-brand,
+.workspace-label,
+.sidebar-bottom {
+  flex-shrink: 0;
 }
 .sidebar-brand {
   padding: 25px 23px 24px;
@@ -107,10 +123,7 @@
   color: #939baa;
 }
 .sidebar .committee-nav {
-  overflow-y: auto;
-  min-height: 0;
-  flex: 1;
-  padding-bottom: 14px;
+  padding-bottom: 4px;
 }
 .sidebar .committee-nav a {
   font-size: 12px;

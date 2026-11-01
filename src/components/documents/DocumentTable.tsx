@@ -26,7 +26,7 @@ export function DocumentTable({
     );
   if (!documents.length) return <Empty />;
   return (
-    <div className="table-scroll">
+    <div className="table-scroll cards-scroll">
       {/* On phones the "cards" modifier turns each row into a stacked card (see styles/responsive.css). */}
       <table className="document-table cards">
         <thead>

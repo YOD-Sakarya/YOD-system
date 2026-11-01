@@ -53,36 +53,39 @@ export function Sidebar({ user, roles, pendingReviews, open, mobile, onClose, on
         </div>
         <ShieldCheck size={17} />
       </div>
-      <nav aria-label="التنقل الرئيسي">
-        {items.map(item => (
-          <NavLink key={item.to} to={item.to} end={item.to === '/'}>
-            <item.icon size={19} />
-            <span>{item.label}</span>
-            {/* Badge shows how many proposals still await review. */}
-            {item.to === '/reviews' && pendingReviews > 0 && <b>{number(pendingReviews)}</b>}
-          </NavLink>
-        ))}
-      </nav>
-      <div className="committee-heading">
-        مساحات اللجان <span>{number(committees.length)}</span>
+      {/* One scroll area for all navigation; the brand stays on top and the user card at the bottom. */}
+      <div className="sidebar-scroll">
+        <nav aria-label="التنقل الرئيسي">
+          {items.map(item => (
+            <NavLink key={item.to} to={item.to} end={item.to === '/'}>
+              <item.icon size={19} />
+              <span>{item.label}</span>
+              {/* Badge shows how many proposals still await review. */}
+              {item.to === '/reviews' && pendingReviews > 0 && <b>{number(pendingReviews)}</b>}
+            </NavLink>
+          ))}
+        </nav>
+        <div className="committee-heading">
+          مساحات اللجان <span>{number(committees.length)}</span>
+        </div>
+        <nav className="committee-nav" aria-label="اللجان">
+          {committees.map(role => {
+            const active = location.pathname === '/documents' && selectedRole === String(role.roleId);
+            return (
+              <Link
+                key={role.roleId}
+                className={active ? 'active' : ''}
+                aria-current={active ? 'page' : undefined}
+                to={`/documents?role=${role.roleId}`}
+              >
+                <span className={`committee-dot dot-${role.roleId % 4}`} />
+                <span>{role.roleName}</span>
+                <ChevronLeft size={14} />
+              </Link>
+            );
+          })}
+        </nav>
       </div>
-      <nav className="committee-nav" aria-label="اللجان">
-        {committees.map(role => {
-          const active = location.pathname === '/documents' && selectedRole === String(role.roleId);
-          return (
-            <Link
-              key={role.roleId}
-              className={active ? 'active' : ''}
-              aria-current={active ? 'page' : undefined}
-              to={`/documents?role=${role.roleId}`}
-            >
-              <span className={`committee-dot dot-${role.roleId % 4}`} />
-              <span>{role.roleName}</span>
-              <ChevronLeft size={14} />
-            </Link>
-          );
-        })}
-      </nav>
       <div className="sidebar-bottom">
         <Link className="user-link" to="/account" title="حسابي" aria-label={`حسابي: ${user.fullName}`}>
           <div className="avatar small">{user.fullName.charAt(0)}</div>
