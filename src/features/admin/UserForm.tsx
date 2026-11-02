@@ -41,8 +41,18 @@ export function UserForm({ user, roles, onClose, onSaved }: Props) {
     setError('');
     setNotice('');
     try {
-      const result = await api<{ message: string }>(`/users/${user.userId}/reset-password`, { method: 'POST' });
-      setNotice(result.message);
+      const result = await api<{ message: string; temporaryPassword?: string }>(
+        `/users/${user.userId}/reset-password`,
+        {
+          method: 'POST',
+        },
+      );
+      // The temporary password exists only in this response; the developer copies it to WhatsApp now.
+      setNotice(
+        result.temporaryPassword
+          ? `${result.message} كلمة المرور المؤقتة: ${result.temporaryPassword}`
+          : result.message,
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'تعذر إرسال رمز التفعيل.');
     } finally {
@@ -124,7 +134,7 @@ export function UserForm({ user, roles, onClose, onSaved }: Props) {
         </div>
         {provider === 'legacy' && (
           <label>
-            {user ? 'كلمة مرور جديدة (اتركها فارغة للإبقاء على الحالية)' : 'كلمة المرور'}
+            {user ? 'كلمة مرور مؤقتة جديدة (اتركها فارغة للإبقاء على الحالية)' : 'كلمة مرور مؤقتة'}
             <input
               name="password"
               type="password"
@@ -136,9 +146,16 @@ export function UserForm({ user, roles, onClose, onSaved }: Props) {
             />
           </label>
         )}
-        {user && provider === 'neon' && (
+        {provider === 'legacy' && (
+          <p className="form-notice">
+            أرسل كلمة المرور للمستخدم (مثلًا عبر واتساب). سيُطلب منه اختيار كلمة مرور جديدة عند أول تسجيل دخول.
+          </p>
+        )}
+        {user && provider && (
           <button type="button" className="button secondary" disabled={busy} onClick={resetPassword}>
-            إرسال رمز تفعيل / إعادة تعيين كلمة المرور إلى البريد المحفوظ
+            {provider === 'neon'
+              ? 'إرسال رمز تفعيل / إعادة تعيين كلمة المرور إلى البريد المحفوظ'
+              : 'إنشاء كلمة مرور مؤقتة جديدة'}
           </button>
         )}
         <div className="form-actions">

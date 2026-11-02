@@ -1,10 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import { Brand } from '../../components/ui/Brand';
-import { getNeonAuth } from '../../lib/auth';
-import { api } from '../../lib/api';
+import { getAuthSettings, getNeonAuth } from '../../lib/auth';
+import { api, json } from '../../lib/api';
 import type { User } from '../../types';
 
-/** Temporary credentials grant access only to this form until the server verifies a managed password change. */
+/**
+ * A temporary password (issued by the developer) grants access only to this form. In the default login the server stores
+ * the new password itself; in Better Auth mode the change goes to Neon and the server verifies it afterwards.
+ */
 export function FirstLoginPassword({
   onComplete,
   onLogout,
@@ -24,10 +27,14 @@ export function FirstLoginPassword({
     setBusy(true);
     setError('');
     try {
-      const result = await (
-        await getNeonAuth()
-      ).changePassword({ currentPassword, newPassword, revokeOtherSessions: true });
-      if (result.error) throw new Error('تعذر تغيير كلمة المرور. تأكد من كلمة المرور المؤقتة وحاول مجددًا.');
+      if ((await getAuthSettings()).provider === 'neon') {
+        const result = await (
+          await getNeonAuth()
+        ).changePassword({ currentPassword, newPassword, revokeOtherSessions: true });
+        if (result.error) throw new Error('تعذر تغيير كلمة المرور. تأكد من كلمة المرور المؤقتة وحاول مجددًا.');
+      } else {
+        await api('/account/password', { method: 'PUT', body: json({ currentPassword, newPassword }) });
+      }
       const user = await api<User>('/auth/me');
       if (user.mustChangePassword) throw new Error('لم يكتمل تحديث كلمة المرور. حاول مجددًا.');
       onComplete(user);

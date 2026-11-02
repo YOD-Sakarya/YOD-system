@@ -177,6 +177,11 @@ Archived cycles are read-only for everyone except the developer (who may add/edi
   password returns **403 (not 401)**, because the client treats 401 as an expired session. Rate limit 20 / 15 min.
 - CSRF: non-GET requests need an `Origin` equal to `APP_ORIGIN` or to the request's own host.
 
+- **Temporary passwords (legacy mode).** The developer sets a password when creating or editing a seat, or presses
+  "إنشاء كلمة مرور مؤقتة جديدة" (`POST /api/users/:id/reset-password`, shown once). It is stored as `!temporary:scrypt:…`; sign-in works but
+  `mustChangePassword` limits the session to `GET /auth/me` and `PUT /account/password` until the member chooses a new password
+  (a normal hash lifts the restriction). There is no forgot-password by email; members ask the developer.
+
 ### 8.6 Better Auth / Neon mode (`AUTH_PROVIDER=neon`, explicit opt-in; production still runs `legacy` until the switch-over)
 Browser talks to Neon Auth for sign-in/sign-up/forgot/reset password; the API verifies the Bearer JWT (JWKS) and maps the
 identity to a `Users` row: first by `AuthIdentities`, then by verified email; **an unknown email is rejected (403)**, nothing is auto-created.

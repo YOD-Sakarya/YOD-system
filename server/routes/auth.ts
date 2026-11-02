@@ -4,7 +4,7 @@ import { config } from '../config.js';
 import { cookieOptions, SESSION_COOKIE, startSession } from '../http/authenticate.js';
 import type { AppContext } from '../http/context.js';
 import { fail, HttpError } from '../http/errors.js';
-import { type Actor, verifyPassword } from '../security.js';
+import { type Actor, isTemporaryPassword, verifyPassword } from '../security.js';
 import { activationSchema, loginSchema } from '../schemas.js';
 import { activateSeat } from '../services/activation.js';
 import { createManagedAccounts } from '../services/managedAccounts.js';
@@ -52,6 +52,7 @@ export function publicAuthRoutes({ query, transaction, authProvider, managedAcco
     if (!user || user.password.startsWith(NEON_MANAGED_PREFIX) || !verifyPassword(body.password, user.password))
       return fail(401, 'اسم المستخدم أو كلمة المرور غير صحيحة.');
     const actor: Actor = { userId: user.userId, fullName: user.fullName, roleId: user.roleId, roleName: user.roleName };
+    if (isTemporaryPassword(user.password)) actor.mustChangePassword = true;
     startSession(res, actor.userId, user.password);
     res.json(actor);
   });

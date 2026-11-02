@@ -82,11 +82,25 @@ export function voteDecision(options: { text: string; count: number }[]) {
   if (!ranked[0]?.count) return 'لا يوجد قرار';
   return ranked[0].count === ranked[1]?.count ? 'تعادل' : ranked[0].text;
 }
+/** A password the developer handed out: it works for sign-in but the member must replace it before using the workspace. */
+export const TEMPORARY_PASSWORD_PREFIX = '!temporary:';
+export const isTemporaryPassword = (stored: string) => stored.startsWith(TEMPORARY_PASSWORD_PREFIX);
+
 export function hashPassword(password: string) {
   const salt = randomBytes(16).toString('hex');
   return `scrypt:${salt}:${scryptSync(password, salt, 64).toString('hex')}`;
 }
-export function verifyPassword(password: string, stored: string) {
+/** Hashes a developer-issued password. Choosing a new password writes a plain hash, which ends the restriction. */
+export const hashTemporaryPassword = (password: string) => TEMPORARY_PASSWORD_PREFIX + hashPassword(password);
+
+/** Readable random password (no look-alike characters) for the developer's "reset password" button. */
+export function generateTemporaryPassword(length = 12) {
+  const alphabet = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from(randomBytes(length), byte => alphabet[byte % alphabet.length]).join('');
+}
+
+export function verifyPassword(password: string, storedHash: string) {
+  const stored = isTemporaryPassword(storedHash) ? storedHash.slice(TEMPORARY_PASSWORD_PREFIX.length) : storedHash;
   if (stored.startsWith('scrypt:')) {
     const [, salt, hash] = stored.split(':');
     if (!salt || !hash || !/^[a-f0-9]{128}$/.test(hash)) return false;
@@ -97,6 +111,5 @@ export function verifyPassword(password: string, stored: string) {
     expected = Buffer.from(stored);
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
-
-/** A stored password that is neither a scrypt hash nor a Better Auth marker is legacy plain text from the old .NET app. */
-export const isPlainTextPassword = (stored: string) => !stored.startsWith('scrypt:') && !stored.startsWith('!neon-');
+export const isPlainTextPassword = (stored: string) =>
+  !stored.startsWith('scrypt:') && !stored.startsWith('!neon-') && !isTemporaryPassword(stored);

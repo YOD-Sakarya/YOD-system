@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
 import { resolveNeonActor, verifyNeonToken } from '../neon-auth.js';
-import { type Actor, sessionVersion } from '../security.js';
+import { type Actor, isTemporaryPassword, sessionVersion } from '../security.js';
 import type { AppContext } from './context.js';
 import { HttpError } from './errors.js';
 
@@ -44,7 +44,8 @@ async function actorFromCookie(req: Request, context: AppContext): Promise<Actor
   if (claims.ver !== sessionVersion(String(row.passwordHash)))
     throw new HttpError(401, 'انتهت الجلسة. سجّل الدخول مجددًا.');
   const { passwordHash: _omit, ...actor } = row;
-  return actor as Actor;
+  // A password issued by the developer limits the session to the "choose your password" step.
+  return (isTemporaryPassword(String(row.passwordHash)) ? { ...actor, mustChangePassword: true } : actor) as Actor;
 }
 
 /** Signs the session cookie for a user. Bound to the password hash, so a password change ends older sessions. */
@@ -63,7 +64,9 @@ export function authenticate(context: AppContext) {
     try {
       req.actor =
         context.authProvider === 'neon' ? await actorFromBearer(req, context) : await actorFromCookie(req, context);
-      if (req.actor.mustChangePassword && !(req.method === 'GET' && req.path === '/auth/me'))
+      const allowedWhileRestricted =
+        (req.method === 'GET' && req.path === '/auth/me') || (req.method === 'PUT' && req.path === '/account/password');
+      if (req.actor.mustChangePassword && !allowedWhileRestricted)
         throw new HttpError(403, 'يجب تغيير كلمة المرور المؤقتة قبل استخدام مساحة العمل.');
       next();
     } catch (error) {

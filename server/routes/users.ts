@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { AppContext } from '../http/context.js';
 import { fail, id } from '../http/errors.js';
 import { requireDeveloper } from '../http/requireDeveloper.js';
-import { DEVELOPER_ROLE_ID, hashPassword } from '../security.js';
+import { DEVELOPER_ROLE_ID, generateTemporaryPassword, hashPassword, hashTemporaryPassword } from '../security.js';
 import { config } from '../config.js';
 import { createManagedAccounts } from '../services/managedAccounts.js';
 import { activateSeat, isDeliverableEmail } from '../services/activation.js';
@@ -81,7 +81,7 @@ export function userRoutes({ query, transaction, authProvider, managedAccounts }
           body.username,
           body.email.trim().toLowerCase(),
           body.phoneWhatsapp,
-          identity?.marker || hashPassword(body.password!),
+          identity?.marker || hashTemporaryPassword(body.password!),
         ],
       );
       if (identity)
@@ -178,7 +178,8 @@ export function userRoutes({ query, transaction, authProvider, managedAccounts }
       );
       if (body.password && authProvider === 'legacy')
         await client.query('UPDATE "Users" SET "PasswordHash"=$1 WHERE "UserId"=$2', [
-          hashPassword(body.password),
+          // Editing your own seat keeps you signed in; anyone else must replace the password you set.
+          userId === req.actor.userId ? hashPassword(body.password) : hashTemporaryPassword(body.password),
           userId,
         ]);
 
@@ -225,7 +226,23 @@ export function userRoutes({ query, transaction, authProvider, managedAccounts }
   });
 
   router.post('/:id/reset-password', async (req, res) => {
-    if (authProvider !== 'neon') fail(409, 'إرسال رمز التفعيل متاح مع Better Auth فقط.');
+    if (authProvider !== 'neon') {
+      // Legacy mode: issue a new temporary password. It is shown once; only its hash is stored.
+      const userId = id(req.params.id);
+      if (userId === req.actor.userId) fail(400, 'غيّر كلمة مرورك من صفحة حسابي.');
+      const temporaryPassword = generateTemporaryPassword();
+      const updated = await query('UPDATE "Users" SET "PasswordHash"=$1 WHERE "UserId"=$2 RETURNING 1', [
+        hashTemporaryPassword(temporaryPassword),
+        userId,
+      ]);
+      if (!updated.length) fail(404, 'المستخدم غير موجود.');
+      return res
+        .set('Cache-Control', 'no-store')
+        .json({
+          temporaryPassword,
+          message: 'تم إنشاء كلمة مرور مؤقتة. أرسلها للمستخدم، وسيختار كلمة جديدة عند أول دخول.',
+        });
+    }
     const [user] = await query('SELECT "Email" AS email FROM "Users" WHERE "UserId"=$1', [id(req.params.id)]);
     if (!user) fail(404, 'المستخدم غير موجود.');
     await managed.sendActivation(user.email);
