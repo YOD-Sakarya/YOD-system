@@ -44,6 +44,8 @@ try {
   await client.query(
     'ALTER TABLE "VoteSessions" ADD COLUMN IF NOT EXISTS "CycleId" integer REFERENCES "Cycles"("CycleId")',
   );
+  // Vote type: oversight members vote on meeting sessions only. The default keeps every existing session a meeting.
+  await client.query(`ALTER TABLE "VoteSessions" ADD COLUMN IF NOT EXISTS "Kind" text NOT NULL DEFAULT 'اجتماع'`);
   await client.query('CREATE INDEX IF NOT EXISTS "Documents_CycleId" ON "Documents" ("CycleId")');
   await client.query('CREATE INDEX IF NOT EXISTS "VoteSessions_CycleId" ON "VoteSessions" ("CycleId")');
 

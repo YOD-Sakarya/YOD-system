@@ -44,6 +44,11 @@ export const PROPOSAL_TYPE_ID = 1;
 export const STATUS_APPROVED = 'مقبول';
 export const isOversightRole = (roleId: number) => OVERSIGHT_ROLE_IDS.includes(roleId);
 
+/** A vote session is either a meeting vote (everyone votes) or a decision vote (oversight members only watch). */
+export const VOTE_KIND_MEETING = 'اجتماع';
+export const VOTE_KIND_DECISION = 'قرار';
+export const canCastVote = (user: Actor, kind: string) => kind !== VOTE_KIND_DECISION || !isOversightRole(user.roleId);
+
 /**
  * Roles whose acceptance a document needs before it is final:
  * - proposals: president, secretary general and financial officer;

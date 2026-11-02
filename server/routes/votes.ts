@@ -4,7 +4,7 @@ import { sessionsSql } from '../db.js';
 import type { AppContext } from '../http/context.js';
 import { fail, id } from '../http/errors.js';
 import { ballotSchema, voteSessionSchema } from '../schemas.js';
-import { type Actor, canDelete, canManageVotes, voteDecision } from '../security.js';
+import { type Actor, canCastVote, canDelete, canManageVotes, voteDecision } from '../security.js';
 import { ARCHIVED_MESSAGE, getCurrentCycleId } from '../services/cycles.js';
 
 const STATUS_OPEN = 'مفتوحة';
@@ -38,9 +38,9 @@ export function voteRoutes({ query, transaction }: AppContext) {
     const sessionId = await transaction(async client => {
       const session = (
         await client.query(
-          `INSERT INTO "VoteSessions" ("Title","Description","CreatedByUserId","CreatedAt","ClosedAt","Status","CycleId")
-            VALUES ($1,$2,$3,NOW(),$4,$5,$6) RETURNING "VoteSessionId" AS id`,
-          [body.title, body.description, req.actor.userId, body.closeAt || null, STATUS_OPEN, cycleId],
+          `INSERT INTO "VoteSessions" ("Title","Description","Kind","CreatedByUserId","CreatedAt","ClosedAt","Status","CycleId")
+            VALUES ($1,$2,$3,$4,NOW(),$5,$6,$7) RETURNING "VoteSessionId" AS id`,
+          [body.title, body.description, body.kind, req.actor.userId, body.closeAt || null, STATUS_OPEN, cycleId],
         )
       ).rows[0];
       for (const option of body.options)
@@ -55,6 +55,8 @@ export function voteRoutes({ query, transaction }: AppContext) {
     const body = ballotSchema.parse(req.body);
     await transaction(async client => {
       const session = await lockSession(client, sessionId);
+      if (!canCastVote(req.actor, session.Kind))
+        fail(403, 'لجنة الرقابة تطّلع على التصويت على القرارات ولا تصوّت فيه.');
       const expired = session.ClosedAt && new Date(session.ClosedAt).getTime() <= Date.now();
       if (session.Status !== STATUS_OPEN || expired) fail(409, 'انتهت جلسة التصويت.');
       // Sessions of finished cycles no longer accept votes.

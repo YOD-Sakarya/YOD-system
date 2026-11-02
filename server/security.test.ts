@@ -145,3 +145,13 @@ test('only legacy plain-text passwords are flagged for hashing (hashes and Bette
   assert.equal(isPlainTextPassword('!neon-managed:abc'), false);
   assert.equal(isPlainTextPassword('!neon-temporary:abc'), false);
 });
+
+test('oversight members cannot vote on decision sessions but can vote on meetings', async () => {
+  const { canCastVote, VOTE_KIND_DECISION, VOTE_KIND_MEETING } = await import('./security.js');
+  const actor = (roleId: number) => ({ userId: 1, roleId, fullName: 'x', roleName: 'x' });
+  for (const roleId of [10, 12, 13]) {
+    assert.equal(canCastVote(actor(roleId), VOTE_KIND_DECISION), false);
+    assert.equal(canCastVote(actor(roleId), VOTE_KIND_MEETING), true);
+  }
+  for (const roleId of [1, 2, 3, 4, 5, 11]) assert.equal(canCastVote(actor(roleId), VOTE_KIND_DECISION), true);
+});

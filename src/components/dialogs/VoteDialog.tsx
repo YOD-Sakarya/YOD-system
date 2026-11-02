@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { LoaderCircle, Trash2 } from 'lucide-react';
 import { api, json } from '../../lib/api';
 import { date, number } from '../../lib/format';
-import { VOTE_MANAGER_ROLE_IDS, isDeveloper } from '../../lib/roles';
+import { VOTE_MANAGER_ROLE_IDS, canVoteOn, isDeveloper } from '../../lib/roles';
 import { isOpen } from '../../lib/votes';
 import type { User, VoteSession } from '../../types';
 import { Modal } from '../ui/Modal';
@@ -24,6 +24,8 @@ export function VoteDialog({
   const [comment, setComment] = useState(s.myComment || '');
   // Sessions of a finished cycle no longer accept votes.
   const open = isOpen(s) && !archived,
+    // Oversight members only watch decision votes.
+    canVote = canVoteOn(user, s.kind),
     manage = VOTE_MANAGER_ROLE_IDS.includes(user.roleId) || s.createdByUserId === user.userId;
   async function action(kind: 'vote' | 'close' | 'delete') {
     if (preview) return;
@@ -53,6 +55,9 @@ export function VoteDialog({
           </p>
         )}
         <span className={`status ${open ? 'success' : 'neutral'}`}>{open ? 'التصويت مفتوح' : 'التصويت منتهٍ'}</span>
+        <span className="tag" style={{ marginInlineStart: 8 }}>
+          {s.kind}
+        </span>
         <h3 className="vote-dialog-title">{s.title}</h3>
         <p className="muted">{s.description}</p>
         <p className="small-text muted">
@@ -69,7 +74,7 @@ export function VoteDialog({
                   name="vote"
                   value={o.optionId}
                   checked={selected === o.optionId}
-                  disabled={!open || busy}
+                  disabled={!open || !canVote || busy}
                   onChange={() => setSelected(o.optionId)}
                 />
                 <strong>{o.text}</strong>
@@ -82,7 +87,10 @@ export function VoteDialog({
           ))}
         </fieldset>
         <p className="small-text muted">{number(s.voteCount)} أصوات مسجلة. يمكنك تغيير صوتك ما دامت الجلسة مفتوحة.</p>
-        {open && (
+        {open && !canVote && (
+          <p className="form-notice">هذا تصويت على قرار: لجنة الرقابة تطّلع على النتائج ولا تصوّت فيه.</p>
+        )}
+        {open && canVote && (
           <div className="form-stack">
             <label>
               تعليقك (اختياري)
@@ -98,7 +106,7 @@ export function VoteDialog({
           </div>
         )}
         {!open && s.decision && <p className="form-notice">القرار: {s.decision}</p>}
-        {open && (
+        {open && canVote && (
           <button
             className="button primary full"
             disabled={busy || !selected || preview}

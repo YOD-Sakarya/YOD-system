@@ -8,6 +8,9 @@ export const isDeveloper = (user: { roleId: number }) => user.roleId === DEVELOP
 export const REVIEWER_ROLE_IDS = [1, 3, 4];
 /** Oversight committee: chair, deputy chair and rapporteur. They review each other's uploads. */
 export const OVERSIGHT_ROLE_IDS = [10, 12, 13];
+export const isOversight = (user: { roleId: number }) => OVERSIGHT_ROLE_IDS.includes(user.roleId);
+/** Oversight members watch decision votes; meeting votes are open to everyone (mirrors the server rule). */
+export const canVoteOn = (user: { roleId: number }, kind: string) => kind !== 'قرار' || !isOversight(user);
 /** President and secretary general (and the developer) manage vote sessions. */
 export const VOTE_MANAGER_ROLE_IDS = [1, 3, DEVELOPER_ROLE_ID];
 /** Every role except the developer works in a committee space. */

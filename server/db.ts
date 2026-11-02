@@ -38,7 +38,7 @@ export const documentSql = `SELECT d."DocId" AS "docId", d."Title" AS title,
  JOIN "Roles" r ON r."RoleId"=u."RoleId" JOIN "DocumentTypes" t ON t."DocTypeId"=d."DocTypeId"
  JOIN "Quarters" q ON q."QuarterID"=d."QuarterId"`;
 export const sessionsSql = `SELECT s."VoteSessionId" AS "sessionId", s."Title" AS title,
- s."Description" AS description, s."Status" AS status, s."Decision" AS decision,
+ s."Description" AS description, s."Kind" AS kind, s."Status" AS status, s."Decision" AS decision,
  s."CreatedByUserId" AS "createdByUserId", u."FullName" AS "createdByName",
  s."CreatedAt" AS "createdAt", s."ClosedAt" AS "closedAt", s."CycleId" AS "cycleId",
  COALESCE((SELECT json_agg(json_build_object('optionId',o."VoteOptionId",'text',o."Text",

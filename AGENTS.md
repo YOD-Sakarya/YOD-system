@@ -161,6 +161,7 @@ pending until every required role has reviewed, then accepted only if all accept
 Create: roles 1, 3, developer; `closeAt` (optional) must be in the future; 2-10 distinct options. Everyone may vote;
 a vote can be changed while the session is open and in the current cycle. Close: managers or the creator, computes the decision.
 Delete: developer only.
+Each session has a **kind**: `اجتماع` (meeting, everyone votes) or `قرار` (decision, oversight members 10/12/13 can read but not vote; the server answers 403). Existing sessions are meetings (`VoteSessions.Kind`, added by `db:upgrade`).
 
 ### 8.4 Cycles (years)
 Exactly one current cycle. `POST /api/cycles` (developer) archives the current one (`EndDate = start − 1 day`).

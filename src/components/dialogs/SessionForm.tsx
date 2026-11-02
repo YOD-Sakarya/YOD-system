@@ -22,6 +22,7 @@ export function SessionForm({ preview, onClose, onSaved }: DialogProps) {
         body: json({
           title: values.title,
           description: values.description,
+          kind: values.kind,
           closeAt: values.closeAt ? new Date(String(values.closeAt)).toISOString() : null,
           options,
         }),
@@ -52,6 +53,13 @@ export function SessionForm({ preview, onClose, onSaved }: DialogProps) {
             autoFocus
             placeholder="ما القرار الذي نريد اتخاذه؟"
           />
+        </label>
+        <label>
+          نوع التصويت
+          <select name="kind" defaultValue="اجتماع">
+            <option value="اجتماع">اجتماع: يصوّت الجميع</option>
+            <option value="قرار">قرار: لجنة الرقابة تطّلع ولا تصوّت</option>
+          </select>
         </label>
         <label>
           التفاصيل

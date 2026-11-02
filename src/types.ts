@@ -40,6 +40,7 @@ export type VoteSession = {
   sessionId: number;
   title: string;
   description: string;
+  kind: 'اجتماع' | 'قرار';
   status: string;
   decision: string | null;
   createdByUserId: number;

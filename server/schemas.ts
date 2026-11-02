@@ -11,6 +11,7 @@ export const documentSchema = z.object({
 export const voteSessionSchema = z.object({
   title: z.string().trim().min(3).max(250),
   description: z.string().max(4000),
+  kind: z.enum(['اجتماع', 'قرار']).default('اجتماع'),
   closeAt: z.string().datetime({ offset: true }).nullable().optional(),
   // 2-10 distinct, non-empty options.
   options: z

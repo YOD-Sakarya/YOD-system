@@ -60,7 +60,9 @@ export function VotesPage({
                 {isOpen(s) ? 'التصويت مفتوح' : 'انتهى التصويت'}
               </span>
             </div>
-            <h2>{s.title}</h2>
+            <h2>
+              {s.title} <span className="tag">{s.kind}</span>
+            </h2>
             <p>{s.description}</p>
             <div className="ballot-preview">
               {s.options.map(o => (
