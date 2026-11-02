@@ -225,7 +225,7 @@ critical ≥ 90 %, full ≥ 100 %. Shown in the top bar and the "المساحة"
 
 Public: `GET /health`, `GET /auth/config`, `POST /auth/login`, `POST /auth/register` (403), `POST /auth/logout`.
 Authenticated: `GET /auth/me`, `GET /account`, `PUT /account/password`, `PUT /account/email`, `GET /catalog`,
-`GET|POST /documents`, `PUT|DELETE /documents/:id`, `GET /documents/:id/download`, `GET /documents/:id/view` (inline display of PDF, images and text only; other types answer 415), shown in an in-app viewer (`DocumentViewer`: pdf.js for PDFs, loaded lazily; phones would otherwise download the file), `POST /reviews`,
+`GET|POST /documents`, `PUT|DELETE /documents/:id`, `GET /documents/:id/download`, `GET /documents/:id/view` (opened in a new tab; inline for PDF, images and text, any other type is sent as a download; Android phones may still download PDFs because their browsers have no PDF viewer), `POST /reviews`,
 `GET|POST /votes`, `POST /votes/:id/vote`, `PUT /votes/:id/close`, `DELETE /votes/:id` (developer), `GET /cycles`.
 Developer only (`requireDeveloper`): `POST /cycles`, `DELETE /cycles/:id`, `GET|POST /users`, `PUT /users/:id`, `GET /storage`.
 Middleware order in `createApp()`: helmet → json/cookies → Origin check → public routes → `authenticate` → protected routes → 404 → static → `errorHandler`.

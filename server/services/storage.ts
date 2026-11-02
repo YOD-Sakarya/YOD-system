@@ -47,7 +47,6 @@ const VIEWABLE_TYPES: Record<string, string> = {
   '.txt': 'text/plain; charset=utf-8',
 };
 export const viewableType = (extension: string) => VIEWABLE_TYPES[extension.toLowerCase()];
-const NOT_VIEWABLE = 'هذا النوع من الملفات لا يمكن عرضه في المتصفح. استخدم تنزيل الملف.';
 
 /** Sends a pre-cloud upload from the legacy .NET app's wwwroot, refusing paths that escape it. */
 function sendLocalFile(res: Response, filePath: string, title: string, inline: boolean) {
@@ -57,8 +56,9 @@ function sendLocalFile(res: Response, filePath: string, title: string, inline: b
   if (relative.startsWith('..') || path.isAbsolute(relative) || !existsSync(localFile))
     fail(404, 'الملف المحلي غير موجود على الخادم.');
   const extension = path.extname(localFile);
-  if (!inline) return res.download(localFile, `${title}${extension}`);
-  const type = viewableType(extension) ?? fail(415, NOT_VIEWABLE);
+  const type = viewableType(extension);
+  // Types a browser cannot display are downloaded instead, so the view button never ends on an error page.
+  if (!inline || !type) return res.download(localFile, `${title}${extension}`);
   res.type(type).setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(title + extension)}`);
   res.sendFile(localFile);
 }
@@ -85,9 +85,8 @@ export async function sendDocument(
   if (url.protocol !== 'https:' || url.hostname !== 'res.cloudinary.com' || !account) fail(400, 'رابط الملف غير صالح.');
 
   const extension = path.extname(url.pathname).slice(0, 12);
-  // Decide before contacting Cloudinary: a file that cannot be displayed should not be fetched for nothing.
-  const viewable = viewableType(extension);
-  if (inline && !viewable) fail(415, NOT_VIEWABLE);
+  // Only types a browser can display safely are shown; anything else is sent as a download.
+  const viewable = inline ? viewableType(extension) : undefined;
 
   let upstream = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS), redirect: 'error' });
   if (!upstream.ok && account?.api_secret) {
@@ -101,13 +100,10 @@ export async function sendDocument(
   if (!upstream.ok) fail(502, 'تعذر تنزيل الملف من التخزين السحابي.');
 
   // For viewing, our own type decides how the browser treats the file, never the type Cloudinary reports.
-  res.setHeader(
-    'Content-Type',
-    inline ? viewable! : upstream.headers.get('content-type') || 'application/octet-stream',
-  );
+  res.setHeader('Content-Type', viewable ?? (upstream.headers.get('content-type') || 'application/octet-stream'));
   res.setHeader(
     'Content-Disposition',
-    `${inline ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(doc.Title + extension)}`,
+    `${viewable ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(doc.Title + extension)}`,
   );
   if (upstream.body)
     Readable.fromWeb(upstream.body as never)

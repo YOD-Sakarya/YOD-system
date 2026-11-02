@@ -28,7 +28,6 @@
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.468.0",
     "multer": "^2.0.2",
-    "pdfjs-dist": "4.10.38",
     "pg": "^8.16.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
