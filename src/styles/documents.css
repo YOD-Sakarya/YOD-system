@@ -293,3 +293,27 @@
   border-radius: 7px;
   font-size: 13px;
 }
+
+/* In-app document viewer: PDF pages are canvases stacked vertically, scrolled by the dialog. */
+.viewer-pages {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+.viewer-pages canvas {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--line, #d9dee7);
+  background: #fff;
+}
+.viewer-image {
+  display: block;
+  max-width: 100%;
+  margin-inline: auto;
+}
+.viewer-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 65vh;
+  overflow: auto;
+}

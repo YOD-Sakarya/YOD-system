@@ -39,7 +39,7 @@ function securityHeaders(context: AppContext) {
           directives: {
             'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
             'font-src': ["'self'", 'https://fonts.gstatic.com'],
-            'img-src': ["'self'", 'data:'],
+            'img-src': ["'self'", 'data:', 'blob:'],
             'connect-src': connectSources,
             'upgrade-insecure-requests': null,
           },

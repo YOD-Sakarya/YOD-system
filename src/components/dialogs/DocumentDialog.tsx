@@ -9,6 +9,7 @@ import type { Document, User } from '../../types';
 import { Modal } from '../ui/Modal';
 import { ReviewProgress } from '../ui/ReviewProgress';
 import { Status } from '../ui/Status';
+import { DocumentViewer } from './DocumentViewer';
 import { errorText, PreviewNote, type DialogProps } from './shared';
 
 /** Document details with download, edit/delete (owner or leadership) and the review history/form. */
@@ -23,7 +24,8 @@ export function DocumentDialog({
 }: DialogProps & { document: Document; user: User; archived: boolean; onEdit: (d: Document) => void }) {
   const [error, setError] = useState(''),
     [busy, setBusy] = useState(false),
-    [confirm, setConfirm] = useState(false);
+    [confirm, setConfirm] = useState(false),
+    [viewing, setViewing] = useState(false);
   const developer = isDeveloper(user);
   // Roles that must review this document (proposals: leadership; oversight uploads: the other oversight members).
   const reviewers = reviewerRolesFor(doc);
@@ -54,27 +56,6 @@ export function DocumentDialog({
       await api(`/documents/${doc.docId}`, { method: 'DELETE' });
       await onSaved('تم حذف المستند.');
     } catch (e) {
-      setError(errorText(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-  /** Opens the file in a new tab. The tab is opened first (while the click still counts) and filled once the file arrives. */
-  async function view() {
-    const tab = window.open('', '_blank');
-    setBusy(true);
-    setError('');
-    try {
-      const response = await fetch(`/api/documents/${doc.docId}/view`, { headers: await getAuthHeaders() });
-      if (!response.ok) {
-        const body = await response.json();
-        throw new Error(body.message);
-      }
-      const blob = await response.blob();
-      if (!tab) throw new Error('اسمح للموقع بفتح النوافذ المنبثقة لعرض الملف.');
-      tab.location.href = URL.createObjectURL(blob);
-    } catch (e) {
-      tab?.close();
       setError(errorText(e));
     } finally {
       setBusy(false);
@@ -143,7 +124,7 @@ export function DocumentDialog({
           </div>
         </dl>
         <div className="detail-actions">
-          <button className="button secondary" onClick={view} disabled={busy || preview}>
+          <button className="button secondary" onClick={() => setViewing(true)} disabled={busy || preview}>
             <Eye size={17} />
             عرض الملف
           </button>
@@ -234,6 +215,9 @@ export function DocumentDialog({
           </section>
         )}
       </div>
+      {viewing && (
+        <DocumentViewer docId={doc.docId} title={doc.title} onDownload={download} onClose={() => setViewing(false)} />
+      )}
     </Modal>
   );
 }
