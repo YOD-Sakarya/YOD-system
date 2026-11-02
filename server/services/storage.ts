@@ -33,32 +33,61 @@ export async function saveFile(file: Express.Multer.File) {
   });
 }
 
+/**
+ * File types a browser can display safely. Anything else (Office files, archives, and above all HTML or SVG, which could run
+ * scripts on our origin) is only offered as a download.
+ */
+const VIEWABLE_TYPES: Record<string, string> = {
+  '.pdf': 'application/pdf',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.txt': 'text/plain; charset=utf-8',
+};
+export const viewableType = (extension: string) => VIEWABLE_TYPES[extension.toLowerCase()];
+const NOT_VIEWABLE = 'هذا النوع من الملفات لا يمكن عرضه في المتصفح. استخدم تنزيل الملف.';
+
 /** Sends a pre-cloud upload from the legacy .NET app's wwwroot, refusing paths that escape it. */
-function sendLocalFile(res: Response, filePath: string, title: string) {
+function sendLocalFile(res: Response, filePath: string, title: string, inline: boolean) {
   const webRoot = path.resolve(root, '..', 'Yod_MS3', 'wwwroot');
   const localFile = path.resolve(webRoot, filePath.replace(/^[/\\]+/, ''));
   const relative = path.relative(webRoot, localFile);
   if (relative.startsWith('..') || path.isAbsolute(relative) || !existsSync(localFile))
     fail(404, 'الملف المحلي غير موجود على الخادم.');
-  res.download(localFile, `${title}${path.extname(localFile)}`);
+  const extension = path.extname(localFile);
+  if (!inline) return res.download(localFile, `${title}${extension}`);
+  const type = viewableType(extension) ?? fail(415, NOT_VIEWABLE);
+  res.type(type).setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(title + extension)}`);
+  res.sendFile(localFile);
 }
 
 /**
  * Streams a stored document to the client. Handles both retained local files and Cloudinary URLs
  * from either the current or the legacy account; private files are retried with a signed URL.
  */
-export async function sendDocument(res: Response, doc: { FilePath: string; Title: string }) {
+export async function sendDocument(
+  res: Response,
+  doc: { FilePath: string; Title: string },
+  { inline = false }: { inline?: boolean } = {},
+) {
   let url: URL;
   try {
     url = new URL(doc.FilePath);
   } catch {
-    return sendLocalFile(res, String(doc.FilePath), doc.Title);
+    return sendLocalFile(res, String(doc.FilePath), doc.Title, inline);
   }
   // Only fetch Cloudinary URLs that belong to one of our accounts (prevents using the endpoint as an open proxy).
   const account = [config.cloud, legacyCloud].find(
     cloud => cloud.cloud_name && url.pathname.startsWith(`/${cloud.cloud_name}/`),
   );
   if (url.protocol !== 'https:' || url.hostname !== 'res.cloudinary.com' || !account) fail(400, 'رابط الملف غير صالح.');
+
+  const extension = path.extname(url.pathname).slice(0, 12);
+  // Decide before contacting Cloudinary: a file that cannot be displayed should not be fetched for nothing.
+  const viewable = viewableType(extension);
+  if (inline && !viewable) fail(415, NOT_VIEWABLE);
 
   let upstream = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS), redirect: 'error' });
   if (!upstream.ok && account?.api_secret) {
@@ -71,9 +100,15 @@ export async function sendDocument(res: Response, doc: { FilePath: string; Title
   }
   if (!upstream.ok) fail(502, 'تعذر تنزيل الملف من التخزين السحابي.');
 
-  res.setHeader('Content-Type', upstream.headers.get('content-type') || 'application/octet-stream');
-  const extension = path.extname(url.pathname).slice(0, 12);
-  res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(doc.Title + extension)}`);
+  // For viewing, our own type decides how the browser treats the file, never the type Cloudinary reports.
+  res.setHeader(
+    'Content-Type',
+    inline ? viewable! : upstream.headers.get('content-type') || 'application/octet-stream',
+  );
+  res.setHeader(
+    'Content-Disposition',
+    `${inline ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(doc.Title + extension)}`,
+  );
   if (upstream.body)
     Readable.fromWeb(upstream.body as never)
       .on('error', () => res.destroy())

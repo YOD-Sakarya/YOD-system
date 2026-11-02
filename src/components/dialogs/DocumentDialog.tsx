@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Check, Download, FileText, LoaderCircle, Pencil, Trash2 } from 'lucide-react';
+import { Check, Download, Eye, FileText, LoaderCircle, Pencil, Trash2 } from 'lucide-react';
 import { api, json } from '../../lib/api';
 import { getAuthHeaders } from '../../lib/auth';
 import { date } from '../../lib/format';
@@ -54,6 +54,27 @@ export function DocumentDialog({
       await api(`/documents/${doc.docId}`, { method: 'DELETE' });
       await onSaved('تم حذف المستند.');
     } catch (e) {
+      setError(errorText(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  /** Opens the file in a new tab. The tab is opened first (while the click still counts) and filled once the file arrives. */
+  async function view() {
+    const tab = window.open('', '_blank');
+    setBusy(true);
+    setError('');
+    try {
+      const response = await fetch(`/api/documents/${doc.docId}/view`, { headers: await getAuthHeaders() });
+      if (!response.ok) {
+        const body = await response.json();
+        throw new Error(body.message);
+      }
+      const blob = await response.blob();
+      if (!tab) throw new Error('اسمح للموقع بفتح النوافذ المنبثقة لعرض الملف.');
+      tab.location.href = URL.createObjectURL(blob);
+    } catch (e) {
+      tab?.close();
       setError(errorText(e));
     } finally {
       setBusy(false);
@@ -122,6 +143,10 @@ export function DocumentDialog({
           </div>
         </dl>
         <div className="detail-actions">
+          <button className="button secondary" onClick={view} disabled={busy || preview}>
+            <Eye size={17} />
+            عرض الملف
+          </button>
           <button className="button secondary" onClick={download} disabled={busy || preview}>
             <Download size={17} />
             تنزيل الملف

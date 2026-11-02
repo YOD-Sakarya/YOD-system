@@ -225,7 +225,7 @@ critical ≥ 90 %, full ≥ 100 %. Shown in the top bar and the "المساحة"
 
 Public: `GET /health`, `GET /auth/config`, `POST /auth/login`, `POST /auth/register` (403), `POST /auth/logout`.
 Authenticated: `GET /auth/me`, `GET /account`, `PUT /account/password`, `PUT /account/email`, `GET /catalog`,
-`GET|POST /documents`, `PUT|DELETE /documents/:id`, `GET /documents/:id/download`, `POST /reviews`,
+`GET|POST /documents`, `PUT|DELETE /documents/:id`, `GET /documents/:id/download`, `GET /documents/:id/view` (inline display of PDF, images and text only; other types answer 415), `POST /reviews`,
 `GET|POST /votes`, `POST /votes/:id/vote`, `PUT /votes/:id/close`, `DELETE /votes/:id` (developer), `GET /cycles`.
 Developer only (`requireDeveloper`): `POST /cycles`, `DELETE /cycles/:id`, `GET|POST /users`, `PUT /users/:id`, `GET /storage`.
 Middleware order in `createApp()`: helmet → json/cookies → Origin check → public routes → `authenticate` → protected routes → 404 → static → `errorHandler`.

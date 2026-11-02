@@ -155,3 +155,11 @@ test('oversight members cannot vote on decision sessions but can vote on meeting
   }
   for (const roleId of [1, 2, 3, 4, 5, 11]) assert.equal(canCastVote(actor(roleId), VOTE_KIND_DECISION), true);
 });
+
+test('only safe file types can be displayed in the browser', async () => {
+  const { viewableType } = await import('./services/storage.js');
+  assert.equal(viewableType('.PDF'), 'application/pdf');
+  assert.equal(viewableType('.png'), 'image/png');
+  for (const extension of ['.html', '.svg', '.docx', '.pptx', '.js', ''])
+    assert.equal(viewableType(extension), undefined);
+});

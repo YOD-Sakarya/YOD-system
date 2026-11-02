@@ -141,5 +141,11 @@ export function documentRoutes({ query, transaction }: AppContext) {
     await sendDocument(res, { FilePath: doc.FilePath, Title: doc.Title });
   });
 
+  // Same access rules as the download; the browser displays the file instead of saving it (PDF, images and text only).
+  router.get('/:id/view', async (req, res) => {
+    const doc = await getDocument(id(req.params.id), req.actor);
+    await sendDocument(res, { FilePath: doc.FilePath, Title: doc.Title }, { inline: true });
+  });
+
   return router;
 }
