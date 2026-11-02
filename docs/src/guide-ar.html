@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<title>دليل نظام مساحة الاتحاد</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 20mm; }
+  @page :first { margin: 0; }
+  :root { --red:#a52c38; --navy:#202b3b; --ink:#2b3648; --muted:#657387; --line:#e3e8ef; --canvas:#f5f7fa; --green:#23735c; --amber:#b7791f; }
+  * { box-sizing: border-box; }
+  html { font-family: "Segoe UI", Tahoma, Arial, sans-serif; color: var(--ink); font-size: 11pt; line-height: 1.75; }
+  body { margin: 0; }
+  h1, h2, h3 { color: var(--navy); line-height: 1.4; margin: 0; }
+  p { margin: 0 0 8pt; }
+  ul, ol { margin: 0 0 8pt; padding-inline-start: 20pt; }
+  li { margin-bottom: 3pt; }
+  b, strong { color: var(--navy); }
+
+  /* cover */
+  .cover { height: 297mm; width: 210mm; background: var(--navy); color: #fff; position: relative; padding: 30mm 22mm; page-break-after: always; overflow: hidden; }
+  .cover .logo { width: 34mm; background: #fff; border-radius: 6mm; padding: 4mm; }
+  .cover h1 { color: #fff; font-size: 34pt; margin-top: 70mm; }
+  .cover .sub { font-size: 16pt; color: #d6dbe5; margin-top: 6mm; }
+  .cover .badge { display: inline-block; margin-top: 16mm; background: var(--red); color: #fff; padding: 2.5mm 7mm; border-radius: 99mm; font-size: 12pt; }
+  .cover .foot { position: absolute; bottom: 24mm; inset-inline: 22mm; color: #aab3c3; font-size: 11pt; border-top: 1px solid #3a4658; padding-top: 6mm; }
+  .cover .ring { position: absolute; inset-inline-start: -40mm; bottom: -40mm; width: 130mm; height: 130mm; border: 14mm solid #2d3b50; border-radius: 50%; }
+
+  /* sections */
+  section { break-before: page; }
+  section.cont { break-before: auto; margin-top: 18pt; }
+  .sec-head, h2, h3 { break-after: avoid; }
+  .sec-head { display: flex; align-items: center; gap: 10pt; margin-bottom: 12pt; padding-bottom: 8pt; border-bottom: 2px solid var(--line); }
+  .num { flex: none; width: 30pt; height: 30pt; border-radius: 50%; background: var(--red); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14pt; }
+  h1.title { font-size: 21pt; }
+  h2 { font-size: 14pt; margin: 14pt 0 6pt; color: var(--red); }
+  h3 { font-size: 12pt; margin: 10pt 0 4pt; }
+
+  .lead { font-size: 12pt; color: var(--ink); }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9pt; margin: 10pt 0; }
+  .card { border: 1px solid var(--line); border-radius: 8pt; padding: 10pt 11pt; background: #fff; break-inside: avoid; }
+  .card h3 { margin-top: 0; font-size: 12pt; }
+  .card p { font-size: 10.5pt; margin: 0; color: var(--muted); line-height: 1.7; }
+  .card .ic { width: 24pt; height: 24pt; border-radius: 6pt; display: grid; place-items: center; font-size: 13pt; margin-bottom: 6pt; background: #fbe9eb; color: var(--red); }
+  .cards.two { grid-template-columns: repeat(2, 1fr); }
+
+  table.t { width: 100%; border-collapse: collapse; margin: 8pt 0 12pt; font-size: 10.5pt; line-height: 1.6; break-inside: auto; }
+  table.t th { background: var(--navy); color: #fff; text-align: right; padding: 6pt 8pt; font-weight: 600; }
+  table.t td { padding: 6pt 8pt; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.t tr { break-inside: avoid; }
+  table.t tr:nth-child(even) td { background: var(--canvas); }
+  .tag { display: inline-block; padding: 0 7pt; border-radius: 99pt; font-size: 9.5pt; background: #eef1f6; color: var(--navy); white-space: nowrap; }
+  .tag.red { background: #fbe9eb; color: var(--red); }
+  .tag.green { background: #e3f3ec; color: var(--green); }
+  .tag.amber { background: #fff3dc; color: #7a4b00; }
+
+  .callout { border-radius: 8pt; padding: 9pt 12pt; margin: 10pt 0; font-size: 10.8pt; line-height: 1.8; break-inside: avoid; border: 1px solid; }
+  .callout.info { background: #eef4fb; border-color: #cfdff3; }
+  .callout.warn { background: #fff7e6; border-color: #f1d9a8; }
+  .callout.ok { background: #e9f6f0; border-color: #bfe3d2; }
+  .callout b { color: inherit; }
+
+  .flow { display: flex; align-items: stretch; gap: 0; margin: 12pt 0; }
+  .step { flex: 1; border: 1px solid var(--line); border-radius: 8pt; padding: 8pt 9pt; text-align: center; background: #fff; font-size: 10.3pt; line-height: 1.6; break-inside: avoid; }
+  .step b { display: block; font-size: 11pt; margin-bottom: 2pt; }
+  .arrow { flex: none; width: 16pt; display: grid; place-items: center; color: var(--red); font-size: 15pt; }
+  .step.hl { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .step.hl b { color: #fff; }
+  .step.good { background: #e9f6f0; border-color: #bfe3d2; }
+  .step.bad { background: #fdecee; border-color: #f2c4c9; }
+
+  .toc { margin-top: 6pt; }
+  .toc a { display: flex; gap: 8pt; padding: 6pt 0; border-bottom: 1px dotted var(--line); color: var(--ink); text-decoration: none; }
+  .toc .n { color: var(--red); font-weight: 700; width: 20pt; }
+  .kbd { display: inline-block; border: 1px solid #cdd5e0; border-bottom-width: 2px; border-radius: 4pt; padding: 0 5pt; font-size: 9.5pt; background: #fff; direction: ltr; }
+  .small { font-size: 9.8pt; color: var(--muted); }
+  .center { text-align: center; }
+  .nowrap { white-space: nowrap; }
+  .ltr { direction: ltr; unicode-bidi: embed; }
+</style>
+</head>
+<body>
+
+<!-- ============ cover ============ -->
+<div class="cover">
+  <img class="logo" src="../../public/union-logo.png" alt="" />
+  <h1>دليل نظام<br />«مساحة الاتحاد»</h1>
+  <div class="sub">اتحاد الطلاب اليمنيين في سكاريا (YOD)<br />شرح مبسّط للنظام وأدواره وطريقة عمله</div>
+  <div class="badge">الإصدار الأول · نوفمبر ٢٠٢٦</div>
+  <div class="ring"></div>
+  <div class="foot">للقراءة من قبل الأعضاء والإدارة والمسؤول التقني · الموقع: yodsakarya-system.vercel.app</div>
+</div>
+
+<!-- ============ toc ============ -->
+<section style="break-before: auto">
+  <div class="sec-head"><h1 class="title">محتويات الدليل</h1></div>
+  <div class="toc">
+    <a><span class="n">١</span><span>ما هو النظام ولماذا نستخدمه؟</span></a>
+    <a><span class="n">٢</span><span>الأدوار: من يفعل ماذا؟</span></a>
+    <a><span class="n">٣</span><span>البدء: تسجيل الدخول وحسابي</span></a>
+    <a><span class="n">٤</span><span>جولة في الشاشات</span></a>
+    <a><span class="n">٥</span><span>المستندات: الرفع والتعديل والحذف</span></a>
+    <a><span class="n">٦</span><span>المراجعة والاعتماد (التصورات ولجنة الرقابة)</span></a>
+    <a><span class="n">٧</span><span>التصويت</span></a>
+    <a><span class="n">٨</span><span>الأعوام والأرشيف</span></a>
+    <a><span class="n">٩</span><span>البحث السريع</span></a>
+    <a><span class="n">١٠</span><span>دور المطوّر ولوحته</span></a>
+    <a><span class="n">١١</span><span>الأمان والخصوصية</span></a>
+    <a><span class="n">١٢</span><span>حدود معروفة وخطط التطوير</span></a>
+    <a><span class="n">١٣</span><span>أسئلة شائعة · مسرد المصطلحات</span></a>
+  </div>
+  <div class="callout info" style="margin-top:18pt">
+    <b>كيف تقرأ هذا الدليل؟</b> الأعضاء يكفيهم الأقسام ٣ إلى ٩. أعضاء الهيئة التنفيذية ولجنة الرقابة يقرؤون أيضًا القسمين ٢ و٦.
+    القسم ١٠ خاص بالمطوّر (مسؤول النظام).
+  </div>
+</section>
+
+<!-- ============ 1 ============ -->
+<section>
+  <div class="sec-head"><span class="num">١</span><h1 class="title">ما هو النظام ولماذا نستخدمه؟</h1></div>
+  <p class="lead"><b>مساحة الاتحاد</b> موقع إلكتروني واحد يجمع عمل الاتحاد: المستندات واللجان والمراجعات والتصويت، بدل
+  تفرّقها بين مجموعات الواتساب والملفات المرسلة. يعمل على الحاسوب والهاتف، وواجهته عربية بالكامل.</p>
+  <div class="cards">
+    <div class="card"><div class="ic">▤</div><h3>المستندات</h3><p>كل لجنة ترفع تقاريرها وبياناتها ومحاضرها وخططها وتصوّراتها في مكان واحد منظّم حسب اللجنة والنوع والربع والعام.</p></div>
+    <div class="card"><div class="ic">✓</div><h3>المراجعات</h3><p>التصوّرات لا تُنفَّذ قبل موافقة الرئيس والأمين العام والمسؤول المالي. وتقارير لجنة الرقابة تُعتمد من أعضائها أولًا.</p></div>
+    <div class="card"><div class="ic">☑</div><h3>التصويت</h3><p>تُفتح جلسة تصويت على أي قرار، يصوّت الجميع، وعند الإغلاق يُسجَّل القرار تلقائيًا.</p></div>
+  </div>
+  <h2>أهم الأفكار في النظام</h2>
+  <ul>
+    <li><b>الحساب «مقعد»:</b> الأشخاص يتغيّرون كل عام، لذلك يُسلِّم المطوّر المقعد لشخص جديد، وتبقى مستندات العام السابق محفوظة.</li>
+    <li><b>العام (الدورة):</b> كل مستند يتبع عامًا. العام الحالي مفتوح للعمل، والأعوام السابقة «أرشيف» للقراءة فقط.</li>
+    <li><b>لا حذف بالخطأ:</b> الحذف الحقيقي للمطوّر، ويستطيع صاحب المستند حذف مستنده قبل اعتماده فقط.</li>
+    <li><b>خصوصية لجنة الرقابة:</b> ما ترفعه اللجنة يبقى خاصًا بها حتى يقبله أعضاؤها، ثم يراه الجميع.</li>
+  </ul>
+  <div class="callout ok"><b>باختصار:</b> نظام مرتّب، له صلاحيات واضحة، يحفظ تاريخ الاتحاد عامًا بعد عام، ويمنع أن يتغيّر شيء مهم دون موافقة أصحاب الشأن.</div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section>
+  <div class="sec-head"><span class="num">٢</span><h1 class="title">الأدوار: من يفعل ماذا؟</h1></div>
+  <p>لكل مستخدم <b>دور واحد</b> يحدد ما يظهر له وما يستطيع فعله. في النظام ١٣ دورًا في أربع مجموعات:</p>
+  <table class="t">
+    <tr><th style="width:22%">الدور</th><th style="width:16%">المجموعة</th><th>ما يميّزه</th></tr>
+    <tr><td><b>رئيس الهيئة التنفيذية</b></td><td><span class="tag red">القيادة</span></td><td>يرفع مستنداته، <b>يراجع التصورات</b>، <b>يفتح جلسات التصويت</b> ويغلقها، ويعدّل مستندات الآخرين في العام الحالي.</td></tr>
+    <tr><td><b>نائب الرئيس</b></td><td><span class="tag red">القيادة</span></td><td>يرفع التصورات والتقارير، ويشارك في التصويت والاطلاع.</td></tr>
+    <tr><td><b>أمين عام</b></td><td><span class="tag red">القيادة</span></td><td>مثل الرئيس: <b>يراجع التصورات</b> و<b>يدير التصويت</b>، ويرفع أيضًا المحاضر.</td></tr>
+    <tr><td><b>مسؤول مالي</b></td><td><span class="tag red">القيادة</span></td><td><b>يراجع التصورات</b> (الجانب المالي)، ويرفع التصورات والتقارير.</td></tr>
+    <tr><td><b>علاقات · أكاديمي · أنشطة · طالبات · إعلامي</b></td><td><span class="tag">اللجان</span></td><td>خمسة أدوار لجان؛ كلٌّ منها يرفع التصورات والتقارير والخطط ويصوّت.</td></tr>
+    <tr><td><b>رئيس لجنة الرقابة</b><br /><b>نائب رئيس لجنة الرقابة</b><br /><b>المقرر</b></td><td><span class="tag amber">الرقابة</span></td><td>يطّلعون على مستندات الاتحاد ويرفعون <b>التقارير فقط</b>. تقاريرهم خاصة بهم حتى يقبلها العضوان الآخران.</td></tr>
+    <tr><td><b>المطوّر</b></td><td><span class="tag green">الإدارة التقنية</span></td><td>يدير الحسابات والأعوام والمساحة، وهو وحده من يحذف نهائيًا، ويرى كل شيء.</td></tr>
+  </table>
+  <h2>من يرفع أي نوع من المستندات؟</h2>
+  <table class="t">
+    <tr><th>نوع المستند</th><th>الأدوار المسموح لها بالرفع</th></tr>
+    <tr><td><b>تصوّر</b> (مقترح فعالية أو مشروع)</td><td>الرئيس · نائب الرئيس · الأمين العام · المسؤول المالي · اللجان الخمس</td></tr>
+    <tr><td><b>تقرير</b></td><td>جميع الأدوار تقريبًا (القيادة واللجان ولجنة الرقابة)</td></tr>
+    <tr><td><b>بيان</b></td><td>الرئيس · الأمين العام</td></tr>
+    <tr><td><b>محضر</b> (محضر اجتماع)</td><td>الأمين العام</td></tr>
+    <tr><td><b>خطة</b></td><td>اللجان الخمس</td></tr>
+  </table>
+  <div class="callout info">المطوّر يستطيع رفع أي نوع. وإن لم يظهر لك زر «إضافة مستند» أو لم يظهر النوع الذي تريده، فهذا يعني أن دورك غير مسموح له به.</div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section>
+  <div class="sec-head"><span class="num">٣</span><h1 class="title">البدء: تسجيل الدخول وحسابي</h1></div>
+  <h2>الدخول</h2>
+  <ol>
+    <li>افتح الموقع <span class="ltr">yodsakarya-system.vercel.app</span> من الحاسوب أو الهاتف.</li>
+    <li>اكتب <b>اسم المستخدم أو البريد الإلكتروني</b> الذي سجّله لك المطوّر، ثم كلمة المرور.</li>
+    <li>اضغط «تسجيل الدخول». تبقى جلستك مفتوحة يومًا كاملًا ثم يُطلب منك الدخول من جديد.</li>
+  </ol>
+  <div class="callout warn"><b>لا يوجد إنشاء حساب ذاتي.</b> الحسابات يضيفها المطوّر فقط. إن لم يكن لديك حساب فتواصل معه. زر «استكشف التصميم» يعرض نسخة تجريبية ببيانات وهمية للقراءة فقط.</div>
+  <h2>حسابي</h2>
+  <p>اضغط على اسمك أسفل القائمة الجانبية لتفتح صفحة <b>حسابي</b>، وفيها:</p>
+  <ul>
+    <li><b>تغيير البريد الإلكتروني:</b> يلزم إدخال كلمة المرور الحالية للتأكيد.</li>
+    <li><b>تغيير كلمة المرور:</b> كلمة جديدة لا تقل عن ١٠ أحرف. بعد التغيير تنتهي جلساتك على الأجهزة الأخرى وتبقى هذه الجلسة مفتوحة.</li>
+  </ul>
+  <div class="callout info">اسم المستخدم والدور يغيّرهما المطوّر فقط. لتغيير كلمة المرور لا تحتاج إلى أحد، لكن إن نسيتها فتواصل مع المطوّر ليضع لك كلمة جديدة.</div>
+  <h2>على الهاتف</h2>
+  <p>اضغط زر القائمة (☰) في أعلى الصفحة لتظهر القائمة الجانبية، واضغط خارجها أو زر الإغلاق لإخفائها. الجداول تتحول إلى بطاقات سهلة القراءة.</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section>
+  <div class="sec-head"><span class="num">٤</span><h1 class="title">جولة في الشاشات</h1></div>
+  <table class="t">
+    <tr><th style="width:22%">الشاشة</th><th>ماذا ترى فيها؟</th></tr>
+    <tr><td><b>نظرة عامة</b></td><td>أرقام سريعة (مستندات، قيد المراجعة، جلسات التصويت المفتوحة، فعاليات الشهر)، وآخر المستندات، وما على جدول الاتحاد، والجلسة المفتوحة للتصويت.</td></tr>
+    <tr><td><b>المستندات</b></td><td>مكتبة المستندات مع تصفية حسب الحالة والنوع واللجنة والربع، وبحث، وصفحات متعددة. اضغط على أي مستند لتفاصيله وتنزيله.</td></tr>
+    <tr><td><b>المراجعات</b></td><td>المستندات التي تحتاج موافقة (التصورات وتقارير لجنة الرقابة)، وعدّاد في القائمة بعدد المنتظِر منها.</td></tr>
+    <tr><td><b>جلسات التصويت</b></td><td>الجلسات المفتوحة والمنتهية ونتائجها، وزر «جلسة جديدة» لمن يملك الصلاحية.</td></tr>
+    <tr><td><b>تقويم الاتحاد</b></td><td>تواريخ الفعاليات المرتبطة بالمستندات، شهرًا بشهر.</td></tr>
+    <tr><td><b>اللجان والصلاحيات</b></td><td>كل لجنة وعدد مستنداتها وأنواع المستندات المسموح لها برفعها.</td></tr>
+    <tr><td><b>مساحات اللجان</b> (القائمة الجانبية)</td><td>اختصار لمستندات لجنة بعينها.</td></tr>
+    <tr><td><b>حسابي</b></td><td>تغيير البريد وكلمة المرور.</td></tr>
+    <tr><td><b>لوحة المطوّر</b></td><td>تظهر للمطوّر وحده (القسم ١٠).</td></tr>
+  </table>
+  <h2>حالات المستند</h2>
+  <p><span class="tag amber">قيد المراجعة</span> ينتظر موافقات &nbsp;·&nbsp; <span class="tag green">مقبول</span> اكتملت الموافقات &nbsp;·&nbsp;
+  <span class="tag red">مرفوض</span> رفضه أحد المراجعين &nbsp;·&nbsp; <span class="tag">مكتمل</span> لا يحتاج إلى مراجعة (تقرير أو بيان أو محضر أو خطة من غير لجنة الرقابة).</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section>
+  <div class="sec-head"><span class="num">٥</span><h1 class="title">المستندات: الرفع والتعديل والحذف</h1></div>
+  <h2>رفع مستند جديد</h2>
+  <div class="flow">
+    <div class="step"><b>١</b>اضغط «إضافة مستند»</div><div class="arrow">‹</div>
+    <div class="step"><b>٢</b>اكتب العنوان واختر النوع والربع</div><div class="arrow">‹</div>
+    <div class="step"><b>٣</b>حدّد تاريخ الفعالية</div><div class="arrow">‹</div>
+    <div class="step"><b>٤</b>اختر الملف</div><div class="arrow">‹</div>
+    <div class="step hl"><b>٥</b>«إضافة المستند»</div>
+  </div>
+  <p>يُحفظ المستند في <b>العام الحالي</b> باسمك. إن كان تصورًا بدأ بحالة «قيد المراجعة» تلقائيًا.</p>
+  <div class="callout warn"><b>حجم الملف:</b> الواجهة تذكر حدًّا أقصى ١٠٠ ميجابايت، لكن الموقع المستضاف حاليًا يرفض ما يزيد عن <b>٤٫٥ ميجابايت تقريبًا</b>. اضغط الملفات الكبيرة قبل الرفع، وسيُعالَج هذا القيد لاحقًا (القسم ١٢).</div>
+  <h2>التعديل</h2>
+  <ul>
+    <li>يعدّل المستند <b>صاحبه</b> أو الرئيس أو الأمين العام أو المسؤول المالي أو المطوّر، وفي <b>العام الحالي</b> فقط (المطوّر يعدّل في الأرشيف أيضًا).</li>
+    <li>عند التعديل يمكن استبدال الملف. <b>تُمسح المراجعات السابقة</b> وتبدأ الموافقات من جديد، لأن الإصدار تغيّر.</li>
+  </ul>
+  <h2>الحذف</h2>
+  <table class="t">
+    <tr><th>من؟</th><th>متى؟</th></tr>
+    <tr><td>صاحب المستند</td><td>ما دام المستند <b>غير مقبول</b> (قيد المراجعة أو مرفوض أو مكتمل) وفي العام الحالي.</td></tr>
+    <tr><td>بعد قبول المستند أو بعد انتهاء العام</td><td>للمطوّر فقط.</td></tr>
+    <tr><td>المطوّر</td><td>أي مستند في أي وقت.</td></tr>
+  </table>
+  <p class="small">حذف مستند واحد يحذف سجلّه ومراجعاته، لكن الملف نفسه يبقى في التخزين السحابي احتياطًا. أما حذف عام كامل فيزيل ملفاته أيضًا (القسم ١٠).</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section>
+  <div class="sec-head"><span class="num">٦</span><h1 class="title">المراجعة والاعتماد</h1></div>
+  <p>يوجد مساران للمراجعة. في كليهما: لكل مراجع <b>قراران</b> فقط (مقبول أو مرفوض) مع ملاحظة اختيارية، ويستطيع تحديث مراجعته ما دام العام مفتوحًا.</p>
+  <h2>١ · التصوّرات (مقترحات الفعاليات والمشاريع)</h2>
+  <div class="flow">
+    <div class="step"><b>رفع تصوّر</b>من أي لجنة أو قيادة</div><div class="arrow">‹</div>
+    <div class="step hl"><b>قيد المراجعة</b>ينتظر ٣ مراجعين</div><div class="arrow">‹</div>
+    <div class="step"><b>الرئيس · الأمين العام · المسؤول المالي</b>كلٌّ يقرّر</div><div class="arrow">‹</div>
+    <div class="step good"><b>مقبول</b>إن قبلوا جميعًا</div>
+  </div>
+  <p>تظهر ثلاث نقاط صغيرة بجانب التصوّر تدل على من راجع. إن رفض أحدهم صارت الحالة «مرفوض». وإذا عدّل صاحب التصوّر مستنده بدأت الدورة من جديد.</p>
+  <h2>٢ · مستندات لجنة الرقابة</h2>
+  <div class="flow">
+    <div class="step"><b>عضو رقابة يرفع تقريرًا</b>لا يراه غيرهم</div><div class="arrow">‹</div>
+    <div class="step hl"><b>قيد المراجعة</b>ينتظر العضوين الآخرين</div><div class="arrow">‹</div>
+    <div class="step"><b>العضوان الآخران يراجعان</b>قبول أو رفض</div><div class="arrow">‹</div>
+    <div class="step good"><b>مقبول</b>يراه الجميع</div>
+  </div>
+  <ul>
+    <li>أعضاء لجنة الرقابة ثلاثة: <b>الرئيس</b> و<b>النائب</b> و<b>المقرر</b>. موافقة صاحب التقرير تُحسب تلقائيًا، فيكفي أن يقبله العضوان الآخران ليصبح الثلاثة قد وافقوا.</li>
+    <li><b>قبل القبول</b> يراه أعضاء اللجنة والمطوّر فقط؛ لا يظهر لغيرهم في القوائم ولا في البحث ولا يُنزَّل.</li>
+    <li>إن رُفض التقرير بقي خاصًا باللجنة، ويستطيع صاحبه تعديله وإعادة تقديمه.</li>
+    <li>الرقابة ترفع <b>التقارير فقط</b>؛ لا تصورات ولا خطط ولا محاضر.</li>
+  </ul>
+  <div class="callout info">لا يستطيع العضو مراجعة مستند رفعه بنفسه، ولا يستطيع أحد من خارج اللجنة مراجعة تقاريرها.</div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section>
+  <div class="sec-head"><span class="num">٧</span><h1 class="title">التصويت</h1></div>
+  <div class="flow">
+    <div class="step"><b>فتح الجلسة</b>الرئيس أو الأمين العام</div><div class="arrow">‹</div>
+    <div class="step"><b>الجميع يصوّتون</b>صوت واحد لكل شخص</div><div class="arrow">‹</div>
+    <div class="step hl"><b>الإغلاق</b>يدويًا أو عند الموعد</div><div class="arrow">‹</div>
+    <div class="step good"><b>القرار</b>يُسجَّل تلقائيًا</div>
+  </div>
+  <ul>
+    <li><b>إنشاء الجلسة:</b> عنوان وتفاصيل و<b>من ٢ إلى ١٠ خيارات</b> مختلفة، وموعد إغلاق اختياري يجب أن يكون في المستقبل.</li>
+    <li><b>التصويت:</b> كل عضو له صوت واحد، ويمكنه <b>تغييره</b> ما دامت الجلسة مفتوحة، وإضافة تعليق اختياري.</li>
+    <li><b>الإغلاق:</b> يغلقها من فتحها أو الرئيس أو الأمين العام أو المطوّر. وتُغلق عمليًّا عند موعدها المحدد.</li>
+    <li><b>القرار:</b> الخيار الأكثر أصواتًا. وإن تساوى الخياران الأولان فالنتيجة «تعادل»، وإن لم يصوّت أحد فـ«لا يوجد قرار».</li>
+    <li><b>الحذف:</b> للمطوّر فقط. جلسات الأعوام السابقة لا تقبل تصويتًا جديدًا.</li>
+  </ul>
+  <div class="callout info">نتائج كل خيار تظهر بأعداد وأشرطة، وتُحفظ جلسات كل عام في أرشيفه.</div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="cont">
+  <div class="sec-head"><span class="num">٨</span><h1 class="title">الأعوام والأرشيف</h1></div>
+  <p>يتغيّر أعضاء الاتحاد كل سنة، فنظّم النظام عمله في <b>أعوام</b> (مثل ٢٠٢٥/٢٠٢٦ و٢٠٢٦/٢٠٢٧). في كل لحظة يوجد عام واحد «حالي».</p>
+  <div class="cards two">
+    <div class="card"><div class="ic">●</div><h3>العام الحالي</h3><p>تُرفع فيه المستندات الجديدة وتُفتح فيه جلسات التصويت وتجري المراجعات.</p></div>
+    <div class="card"><div class="ic">▣</div><h3>الأعوام السابقة (أرشيف)</h3><p>تبقى ظاهرة للجميع للقراءة والبحث والتنزيل، لكن لا يُضاف إليها ولا يُعدَّل فيها (إلا من المطوّر).</p></div>
+  </div>
+  <h2>كيف أتصفح عامًا سابقًا؟</h2>
+  <ol>
+    <li>من أعلى الصفحة اختر العام من القائمة المنسدلة بجانب البحث.</li>
+    <li>سيظهر شريط أصفر يخبرك أنك في الأرشيف، وتختفي أزرار الإضافة.</li>
+    <li>للعودة اضغط «العودة إلى العام الحالي».</li>
+  </ol>
+  <div class="callout ok">عند بدء عام جديد <b>لا يُحذف أي شيء</b>؛ يصبح العام السابق أرشيفًا فقط، ويبدأ الأعضاء الجدد بمساحة نظيفة وهم يرون ما فعله من قبلهم.</div>
+</section>
+
+<!-- ============ 9 ============ -->
+<section>
+  <div class="sec-head"><span class="num">٩</span><h1 class="title">البحث السريع</h1></div>
+  <p>مربع البحث في أعلى الصفحة هو أسرع طريق إلى <b>أي مستند أو أي وظيفة</b> في النظام. اضغط عليه أو اضغط <span class="kbd">/</span> أو <span class="kbd">Ctrl + K</span> من أي مكان، ثم اكتب.</p>
+  <table class="t">
+    <tr><th style="width:24%">يجد لك…</th><th>أمثلة على ما تكتب</th></tr>
+    <tr><td><b>مستندات</b> من كل الأعوام</td><td>جزء من العنوان أو اسم اللجنة أو النوع أو صاحب المستند: «تقرير الأنشطة»، «خطة أكاديمي».</td></tr>
+    <tr><td><b>جلسات تصويت</b></td><td>عنوانها أو أحد خياراتها.</td></tr>
+    <tr><td><b>صفحات النظام</b></td><td>«تقويم»، «لجان».</td></tr>
+    <tr><td><b>إجراءات</b> تنفّذها فورًا</td><td>«رفع ملف» ← يفتح نافذة إضافة مستند · «كلمة السر» ← صفحة تغيير كلمة المرور · «جلسة تصويت» · «خروج» · «المستندات المرفوضة».</td></tr>
+    <tr><td><b>مستخدمون</b> (للمطوّر)</td><td>الاسم أو البريد أو الدور.</td></tr>
+  </table>
+  <ul>
+    <li>البحث يتجاوز اختلاف الكتابة: «اداره» تجد «إدارة»، و«كلمه» تجد «كلمة»، وتُقرأ الأرقام العربية والهندية معًا.</li>
+    <li>يمكن كتابة أكثر من كلمة؛ تظهر النتائج التي تحتوي <b>كل</b> الكلمات.</li>
+    <li>استعمل الأسهم <span class="kbd">↑</span> <span class="kbd">↓</span> للتنقل و<span class="kbd">Enter</span> للفتح و<span class="kbd">Esc</span> للإغلاق.</li>
+    <li>النتيجة من عام سابق تحمل شارة باسم عامها، وعند فتحها ينتقل النظام إلى ذلك العام تلقائيًا.</li>
+    <li>الأوامر تظهر حسب صلاحيتك فقط؛ لا ترى «رفع ملف» إن لم يكن دورك مسموحًا له.</li>
+  </ul>
+</section>
+
+<!-- ============ 10 ============ -->
+<section>
+  <div class="sec-head"><span class="num">١٠</span><h1 class="title">دور المطوّر ولوحته</h1></div>
+  <p>المطوّر هو المسؤول التقني عن النظام. يرى كل شيء ويستطيع كل شيء تقريبًا، ولهذا يُمنح لشخص واحد أو اثنين موثوقين فقط.
+  لا يُحسب رأيه ضمن موافقات التصورات (لا يراجع بدل أحد).</p>
+  <h2>صلاحياته</h2>
+  <table class="t">
+    <tr><th style="width:26%">المجال</th><th>ما يفعله المطوّر</th></tr>
+    <tr><td><b>المستخدمون</b></td><td>إضافة مستخدم بدور وكلمة مرور، وتعديل أي حساب، وتغيير دور أي شخص، و<b>تسليم المقعد</b> لشخص جديد.</td></tr>
+    <tr><td><b>الأعوام</b></td><td>بدء عام جديد، وتصفّح كل الأعوام، و<b>حذف عام</b> مع كل ما فيه (بتأكيد كتابي).</td></tr>
+    <tr><td><b>المستندات</b></td><td>رفع أي نوع، وإضافة وتعديل وحذف مستندات في أي عام، ورؤية مستندات لجنة الرقابة قبل اعتمادها.</td></tr>
+    <tr><td><b>التصويت</b></td><td>فتح الجلسات وإغلاقها، وهو وحده من <b>يحذف</b> جلسة.</td></tr>
+    <tr><td><b>المساحة</b></td><td>مراقبة امتلاء التخزين وقاعدة البيانات بشريطين وتنبيهات.</td></tr>
+  </table>
+  <h2>لوحة المطوّر (٣ تبويبات)</h2>
+  <div class="cards">
+    <div class="card"><div class="ic">☺</div><h3>المستخدمون</h3><p>قائمة بكل الحسابات وأدوارها وعدد مستنداتها، مع بحث وزر «إضافة مستخدم» وزر تعديل لكل حساب.</p></div>
+    <div class="card"><div class="ic">▦</div><h3>الأعوام</h3><p>جدول الأعوام بعدد مستنداتها وجلساتها، وزر «بدء عام جديد»، وزر سلة لحذف عام.</p></div>
+    <div class="card"><div class="ic">◔</div><h3>المساحة</h3><p>شريط للملفات (Cloudinary) وآخر لقاعدة البيانات (Neon). أصفر عند ٧٥٪، وأحمر عند ٩٠٪ فما فوق.</p></div>
+  </div>
+  <h2>تسليم المقعد لشخص جديد (بداية كل عام)</h2>
+  <ol>
+    <li>لوحة المطوّر ← المستخدمون ← اضغط تعديل على الحساب.</li>
+    <li>غيّر الاسم واسم المستخدم والبريد، وأدخل <b>كلمة مرور جديدة</b> (إلزامية عند تغيير اسم المستخدم).</li>
+    <li>احفظ. تتوقف كلمة المرور القديمة وجلسات الشخص السابق فورًا، وتبقى مستندات المقعد القديمة محفوظة وتظهر باسم الشخص الجديد.</li>
+  </ol>
+  <h2>حذف عام كامل</h2>
+  <div class="callout warn"><b>إجراء لا رجعة فيه.</b> يحذف مستندات العام ومراجعاتها وجلسات تصويته وملفاته من التخزين السحابي. تظهر نافذة تحذير بالأعداد، ولا يُفعَّل زر الحذف حتى تكتب <b>اسم العام بالضبط</b>. لا يمكن حذف العام الوحيد في النظام.</div>
+  <div class="callout info"><b>الإعداد الأول:</b> تُنشأ قاعدة الأعوام والأدوار بأمر <span class="ltr">npm run db:upgrade</span>، ويُنشأ حساب المطوّر بأمر <span class="ltr">npm run create-developer</span>. التفاصيل التقنية في ملف AGENTS.md.</div>
+</section>
+
+<!-- ============ 11 ============ -->
+<section class="cont">
+  <div class="sec-head"><span class="num">١١</span><h1 class="title">الأمان والخصوصية</h1></div>
+  <table class="t">
+    <tr><th style="width:28%">الجانب</th><th>كيف يُحمى</th></tr>
+    <tr><td><b>كلمات المرور</b></td><td>لا تُحفظ نصًا أبدًا؛ تُشفَّر بخوارزمية <span class="ltr">scrypt</span> مع «ملح» مختلف لكل شخص.</td></tr>
+    <tr><td><b>الجلسة</b></td><td>ملف ارتباط موقَّع رقميًا لا تقرؤه صفحات الموقع ولا يمكن تزويره، ويدوم يومًا. تغيير كلمة المرور يُنهي كل الجلسات الأخرى فورًا.</td></tr>
+    <tr><td><b>المحاولات المتكررة</b></td><td>بعد ٣٠ محاولة دخول خلال ١٥ دقيقة يُمنع المتصفح مؤقتًا. وتغيير كلمة المرور محدود بـ٢٠ محاولة.</td></tr>
+    <tr><td><b>التسجيل</b></td><td>مغلق؛ لا يستطيع أحد إنشاء حساب بنفسه أو منح نفسه دورًا.</td></tr>
+    <tr><td><b>الصلاحيات</b></td><td>تُفحص في الخادم دائمًا، فإخفاء زر في الواجهة ليس هو الحماية الوحيدة.</td></tr>
+    <tr><td><b>الطلبات المزوّرة</b></td><td>أي طلب يغيّر بيانات يجب أن يأتي من الموقع نفسه.</td></tr>
+    <tr><td><b>لجنة الرقابة</b></td><td>مستنداتها غير المعتمدة لا تُرسل أصلًا إلى غير المخوَّلين، فلا تظهر ولو بالبحث.</td></tr>
+    <tr><td><b>الأسرار</b></td><td>مفاتيح قاعدة البيانات والتخزين محفوظة في إعدادات الاستضافة لا في الشفرة، والمستودع لا يحتويها.</td></tr>
+  </table>
+  <div class="callout warn"><b>نصائح للمستخدم:</b> لا تشارك كلمة مرورك، ولا تحفظها في أجهزة عامة، وسجّل الخروج بعد استعمال جهاز مشترك. وإن شككت في حسابك فغيّر كلمة المرور فورًا.</div>
+</section>
+
+<!-- ============ 12 ============ -->
+<section>
+  <div class="sec-head"><span class="num">١٢</span><h1 class="title">حدود معروفة وخطط التطوير</h1></div>
+  <table class="t">
+    <tr><th style="width:30%">الموضوع</th><th>الحالة والخطة</th></tr>
+    <tr><td><b>حجم الملف على الموقع</b></td><td>حدّ الاستضافة نحو ٤٫٥ ميجابايت للطلب الواحد. الحل المقترح: الرفع مباشرة من المتصفح إلى التخزين السحابي بتوقيع مؤقت.</td></tr>
+    <tr><td><b>نسيت كلمة المرور</b></td><td>غير متاحة حاليًا لأن الموقع لا يرسل بريدًا. الحل الجاهز في الشفرة هو الدخول عبر خدمة <b>Better Auth</b> (من Neon) التي ترسل رابط استعادة صالحًا ١٥ دقيقة. التفعيل يتطلب: إضافة عنوان الموقع في إعدادات الخدمة، والتأكد من إرسال البريد، وأن يفعّل كل مستخدم حسابه مرة واحدة ببريده. وبعده يصبح الدخول بالبريد فقط.</td></tr>
+    <tr><td><b>حذف مستند واحد</b></td><td>يُبقي ملفه في التخزين السحابي احتياطًا؛ حذف العام يزيل ملفاته.</td></tr>
+    <tr><td><b>الإشعارات</b></td><td>لا يوجد بريد أو إشعار عند طلب مراجعة أو فتح تصويت؛ يُطلب من الأعضاء الدخول للاطلاع.</td></tr>
+    <tr><td><b>سجل العمليات</b></td><td>لا يوجد سجل تدقيق يوضح من حذف أو عدّل ماذا ومتى.</td></tr>
+    <tr><td><b>بريد مكرر</b></td><td>في البيانات القديمة بريد واحد مشترك بين حسابين؛ يعمل الدخول لهما باسم المستخدم فقط.</td></tr>
+  </table>
+  <h2>أفكار مستقبلية</h2>
+  <ul>
+    <li>إشعارات بريدية وواتساب للمراجعات والتصويت.</li>
+    <li>سجل تدقيق للحذف والتعديل، وتقارير سنوية مطبوعة تلقائيًا.</li>
+    <li>تصدير مستندات عام كامل في ملف واحد قبل أرشفته.</li>
+  </ul>
+</section>
+
+<!-- ============ 13 ============ -->
+<section>
+  <div class="sec-head"><span class="num">١٣</span><h1 class="title">أسئلة شائعة · مسرد المصطلحات</h1></div>
+  <h3>لا يظهر لي زر «إضافة مستند».</h3>
+  <p>إما أنك تتصفح عامًا سابقًا (ارجع إلى العام الحالي)، أو أن دورك غير مسموح له برفع أي نوع.</p>
+  <h3>رفعت مستندًا بالخطأ، ماذا أفعل؟</h3>
+  <p>افتحه واضغط «حذف» إن كان غير مقبول بعد. وإن كان مقبولًا فاطلب من المطوّر حذفه.</p>
+  <h3>أين اختفى تقرير زميلي في لجنة الرقابة؟</h3>
+  <p>تقارير الرقابة تظهر لغير أعضائها بعد أن يقبلها العضوان الآخران فقط.</p>
+  <h3>ظهر لي خطأ «انتهت الجلسة».</h3>
+  <p>سجّل الدخول من جديد. يحدث هذا بعد يوم كامل أو بعد تغيير كلمة المرور من جهاز آخر.</p>
+  <h3>هل يمكنني تغيير اسم المستخدم؟</h3>
+  <p>لا، يغيّره المطوّر. لكنك تستطيع الدخول بالبريد الإلكتروني أيضًا.</p>
+  <h2>مسرد المصطلحات</h2>
+  <table class="t">
+    <tr><th style="width:24%">المصطلح</th><th>المعنى</th></tr>
+    <tr><td>الدورة / العام</td><td>سنة عمل الاتحاد (مثل ٢٠٢٦/٢٠٢٧). واحدة حالية والباقي أرشيف.</td></tr>
+    <tr><td>المقعد</td><td>الحساب المرتبط بدور معيّن؛ يتغيّر الشخص ويبقى المقعد.</td></tr>
+    <tr><td>التصوّر</td><td>مقترح فعالية أو مشروع يحتاج موافقة قبل التنفيذ.</td></tr>
+    <tr><td>المراجعة</td><td>قرار «مقبول» أو «مرفوض» من أحد المخوَّلين مع ملاحظة.</td></tr>
+    <tr><td>الأرشيف</td><td>عام منتهٍ يُقرأ ولا يُعدَّل.</td></tr>
+    <tr><td>المطوّر</td><td>المسؤول التقني عن الحسابات والأعوام والمساحة والحذف.</td></tr>
+  </table>
+  <div class="callout info center" style="margin-top:16pt"><b>مساحة الاتحاد — نعمل معًا، ونترك أثرًا.</b><br /><span class="small">للمطورين: ملف <span class="ltr">AGENTS.md</span> في المستودع يشرح البنية التقنية والقواعد بالتفصيل.</span></div>
+</section>
+</body>
+</html>

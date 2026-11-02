@@ -262,3 +262,8 @@ creates every account.
 
 Deleting a whole year (developer console, "Years") removes its documents, reviews, vote sessions and uploaded files
 after typing the year's name to confirm.
+
+## Documentation
+
+- `AGENTS.md`: architecture, business rules, API and conventions for AI agents and developers.
+- `docs/`: Arabic PDF guide and two PowerPoint decks (members / full). See `docs/README.md`.
