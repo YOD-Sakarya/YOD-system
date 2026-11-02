@@ -3,7 +3,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { config } from './config.js';
 import { query as databaseQuery, transaction as databaseTransaction } from './db.js';
-import type { Actor } from './security.js';
+import { requiresPasswordChange, type Actor } from './security.js';
 
 export class NeonAuthError extends Error {
   constructor(
@@ -84,6 +84,15 @@ export async function resolveNeonActor(
         `auth:subject:${identity.provider}:${identity.subject}`,
       ]);
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`auth:email:${identity.email}`]);
+      if (
+        (
+          await client.query('SELECT 1 FROM "AuthRevocations" WHERE "Provider"=$1 AND "Subject"=$2', [
+            identity.provider,
+            identity.subject,
+          ])
+        ).rowCount
+      )
+        throw new NeonAuthError(403, 'تم تسليم هذا المقعد لمستخدم آخر. تواصل مع المطوّر.');
       const mapped = (
         await client.query(
           `SELECT "UserId" AS "userId" FROM "AuthIdentities"
@@ -124,6 +133,24 @@ export async function resolveNeonActor(
       const actor = (await client.query(actorSelection + ' WHERE u."UserId"=$1', [userId])).rows[0] as
         Actor | undefined;
       if (!actor) throw unauthorized();
+      const credential = (
+        await client.query('SELECT "PasswordHash" AS marker FROM "Users" WHERE "UserId"=$1', [userId])
+      ).rows[0];
+      if (credential?.marker?.startsWith('!neon-temporary:')) {
+        const managed = (
+          await client.query('SELECT password FROM neon_auth.account WHERE "userId"=$1 AND "providerId"=$2', [
+            identity.subject,
+            'credential',
+          ])
+        ).rows[0];
+        actor.mustChangePassword = requiresPasswordChange(credential.marker, managed?.password ?? null);
+        if (!actor.mustChangePassword)
+          await client.query('UPDATE "Users" SET "PasswordHash"=$1 WHERE "UserId"=$2 AND "PasswordHash"=$3', [
+            '!neon-managed:' + identity.subject,
+            userId,
+            credential.marker,
+          ]);
+      }
       return actor;
     });
   } catch (error) {

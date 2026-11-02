@@ -18,6 +18,7 @@ import { demoData, demoUser } from './data/demo';
 import { accountNavigation, adminNavigation, navigation } from './data/navigation';
 import AuthEntry from './features/auth/AuthEntry';
 import { LegacyLoginScreen } from './features/auth/LegacyLoginScreen';
+import { FirstLoginPassword } from './features/auth/FirstLoginPassword';
 import { useCurrentUser } from './hooks/useCurrentUser';
 import { useDialogs } from './hooks/useDialogs';
 import { useMediaQuery } from './hooks/useMediaQuery';
@@ -45,7 +46,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const mobile = useMediaQuery('(max-width: 850px)');
   const { user, setUser, checking } = useCurrentUser(setError);
-  const workspace = useWorkspaceData({ user, preview, setUser, setError });
+  const workspace = useWorkspaceData({ user: user?.mustChangePassword ? null : user, preview, setUser, setError });
   const dialogs = useDialogs();
   const { toast, showToast, clearToast } = useToast();
   const navigate = useNavigate();
@@ -67,7 +68,7 @@ export default function App() {
       votes: all.votes.filter(vote => vote.cycleId === activeCycle.cycleId),
     };
   }, [workspace.data, activeCycle]);
-  const developer = !!user && isDeveloper(user) && !preview;
+  const developer = !!user && !user.mustChangePassword && isDeveloper(user) && !preview;
   const storage = useStorageUsage(developer);
 
   // The search covers every year (not just the one being browsed); the developer can also find people.
@@ -183,6 +184,8 @@ export default function App() {
       />
     );
   }
+
+  if (user.mustChangePassword) return <FirstLoginPassword onComplete={setUser} onLogout={logout} />;
 
   const { loading } = workspace;
   const data = scopedData;

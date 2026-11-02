@@ -67,3 +67,24 @@ export async function signOutNeon() {
   const result = await (await getNeonAuth()).signOut();
   if (result.error) throw new Error('تعذر تسجيل الخروج من Neon. حاول مجددًا.');
 }
+
+/**
+ * Asks the server to send an activation code to the seat that owns this email. The server creates the member's
+ * Better Auth login first when it does not exist yet, and answers the same way for every address.
+ */
+export async function requestActivation(email: string) {
+  let response: Response;
+  try {
+    response = await fetch('/api/auth/activate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ email: email.trim() }),
+      signal: AbortSignal.timeout(30000),
+    });
+  } catch {
+    throw new Error('تعذر الاتصال بالخادم. حاول مرة أخرى.');
+  }
+  if (response.status === 429) throw new Error('محاولات كثيرة. انتظر قليلًا ثم حاول مرة أخرى.');
+  if (!response.ok) throw new Error('تعذر إرسال رمز التفعيل. حاول مجددًا.');
+}

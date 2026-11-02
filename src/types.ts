@@ -1,4 +1,4 @@
-export type User = { userId: number; fullName: string; roleId: number; roleName: string };
+export type User = { userId: number; fullName: string; roleId: number; roleName: string; mustChangePassword?: boolean };
 /** A yearly cycle (union year). Only the current cycle accepts new documents and votes. */
 export type Cycle = {
   cycleId: number;

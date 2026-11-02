@@ -12,6 +12,7 @@
     "test": "tsx --import ./server/test-setup.ts --test server/*.test.ts src/lib/*.test.ts",
     "check:db": "tsx server/check-db.ts",
     "db:upgrade": "tsx server/upgrade-schema.ts",
+    "db:hash-passwords": "tsx server/hash-legacy-passwords.ts",
     "create-developer": "tsx server/create-developer.ts",
     "auth:setup": "tsx server/setup-neon-auth.ts"
   },

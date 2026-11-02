@@ -14,28 +14,36 @@ import {
 } from 'lucide-react';
 import { Brand } from '../../components/ui/Brand';
 import { api } from '../../lib/api';
-import { getNeonAuth } from '../../lib/auth';
+import { getNeonAuth, requestActivation } from '../../lib/auth';
 import type { User } from '../../types';
 import type { AuthEntryProps } from './AuthEntry';
 
-/** Neon auth flows (sign in, sign up, forgot and reset password), selected by the /auth/* route. */
+/** Activation collects email, confirms its code, then sets a password before opening the workspace. */
 export function NeonAuthScreen({ onLogin, onPreview, initialError }: Omit<AuthEntryProps, 'legacy'>) {
   const location = useLocation(),
     navigate = useNavigate();
   const path = location.pathname;
+  const [activationCode, setActivationCode] = useState('');
+  const [activationEmail, setActivationEmail] = useState('');
   const mode =
     path === '/auth/forgot-password'
       ? 'forgot'
       : path === '/auth/reset-password'
         ? 'reset'
-        : path === '/auth/sign-up'
-          ? 'register'
-          : 'login';
+        : path === '/auth/activation-code'
+          ? 'activationCode'
+          : path === '/auth/new-password'
+            ? 'newPassword'
+            : path === '/auth/verify-email'
+              ? 'verify'
+              : path === '/auth/sign-up'
+                ? 'register'
+                : 'login';
   const [busy, setBusy] = useState(false),
     [visible, setVisible] = useState(false),
     [error, setError] = useState(''),
     [notice, setNotice] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => (location.state as { email?: string } | null)?.email || '');
   const [resetToken, setResetToken] = useState(() =>
     mode === 'reset' ? new URLSearchParams(location.search).get('token') || '' : '',
   );
@@ -68,7 +76,7 @@ export function NeonAuthScreen({ onLogin, onPreview, initialError }: Omit<AuthEn
   const changeMode = (to: string, authNotice?: string) => {
     setError('');
     setNotice('');
-    navigate(to, { state: authNotice ? { authNotice } : null });
+    navigate(to, { state: { authNotice, email } });
   };
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -78,7 +86,39 @@ export function NeonAuthScreen({ onLogin, onPreview, initialError }: Omit<AuthEn
     const values = Object.fromEntries(new FormData(event.currentTarget));
     try {
       const auth = await getNeonAuth();
-      if (mode === 'forgot') {
+      if (mode === 'activationCode') {
+        const otp = String(values.otp).trim();
+        const address = String(values.email).trim();
+        const result = await auth.$fetch('/email-otp/check-verification-otp', {
+          method: 'POST',
+          body: { email: address, otp, type: 'forget-password' },
+        });
+        if (result.error) throw new Error('رمز التأكيد غير صحيح أو انتهت صلاحيته. اطلب رمزًا جديدًا.');
+        setActivationCode(otp);
+        setActivationEmail(address);
+        changeMode('/auth/new-password');
+      } else if (mode === 'newPassword') {
+        if (!activationCode || !activationEmail) throw new Error('اطلب رمزًا جديدًا لتفعيل حسابك.');
+        if (values.password !== values.confirmPassword) throw new Error('كلمتا المرور غير متطابقتين.');
+        const result = await auth.$fetch('/email-otp/reset-password', {
+          method: 'POST',
+          body: { email: activationEmail, otp: activationCode, password: String(values.password) },
+        });
+        if (result.error) throw new Error('تعذر حفظ كلمة المرور. قد يكون الرمز منتهي الصلاحية. اطلب رمزًا جديدًا.');
+        setActivationCode('');
+        const signIn = await auth.signIn.email({ email: activationEmail, password: String(values.password) });
+        if (signIn.error) {
+          changeMode('/auth/sign-in', 'تم حفظ كلمة المرور الجديدة. سجّل الدخول للمتابعة.');
+        } else onLogin(await api<User>('/auth/me'));
+      } else if (mode === 'verify') {
+        const otp = String(values.otp).trim();
+        const result = await auth.$fetch('/email-otp/verify-email', {
+          method: 'POST',
+          body: { email: String(values.email).trim(), otp },
+        });
+        if (result.error) throw new Error('رمز التأكيد غير صحيح أو انتهت صلاحيته. تحقق من الرمز أو اطلب رمزًا جديدًا.');
+        changeMode('/auth/sign-in', 'تم تأكيد بريدك الإلكتروني. سجّل الدخول للمتابعة.');
+      } else if (mode === 'forgot') {
         const result = await auth.requestPasswordReset({
           email: String(values.email),
           redirectTo: `${window.location.origin}/auth/reset-password`,
@@ -98,27 +138,20 @@ export function NeonAuthScreen({ onLogin, onPreview, initialError }: Omit<AuthEn
         setResetToken('');
         changeMode('/auth/sign-in', 'تم تحديث كلمة المرور. سجّل الدخول بكلمة المرور الجديدة.');
       } else if (mode === 'register') {
-        const result = await auth.signUp.email({
-          email: String(values.email),
-          password: String(values.password),
-          name: String(values.fullName),
-          callbackURL: `${window.location.origin}/auth/verified`,
-        });
-        if (result.error)
-          throw new Error(
-            'تعذر إنشاء الحساب. تحقق من بريدك وكلمة المرور، أو استخدم استعادة كلمة المرور إذا كان لديك حساب.',
-          );
-        setNotice('تحقق من بريدك الإلكتروني لتأكيد الحساب، ثم سجّل الدخول. يجب أن يكون بريدك مسجّلًا لدى المطوّر.');
+        setActivationCode('');
+        await requestActivation(String(values.email));
+        changeMode(
+          '/auth/activation-code',
+          'إذا كان حسابك مسجّلًا، فسيصلك رمز التفعيل. أدخله للمتابعة إلى اختيار كلمة المرور.',
+        );
       } else {
         const result = await auth.signIn.email({ email: String(values.email), password: String(values.password) });
-        if (result.error)
-          throw new Error(
-            result.error.code === 'EMAIL_NOT_VERIFIED'
-              ? 'يرجى تأكيد بريدك الإلكتروني أولًا. يمكنك إعادة إرسال رسالة التأكيد أدناه.'
-              : 'تعذر تسجيل الدخول. تحقق من البريد الإلكتروني وكلمة المرور.',
-          );
-        if (result.data?.user?.emailVerified === false)
-          throw new Error('يرجى تأكيد بريدك الإلكتروني أولًا. يمكنك إعادة إرسال رسالة التأكيد أدناه.');
+        if (result.error?.code === 'EMAIL_NOT_VERIFIED' || result.data?.user?.emailVerified === false) {
+          await requestActivation(String(values.email));
+          changeMode('/auth/activation-code', 'أرسلنا رمزًا جديدًا لتفعيل حسابك. أدخله ثم اختر كلمة مرورك.');
+          return;
+        }
+        if (result.error) throw new Error('تعذر تسجيل الدخول. تحقق من البريد الإلكتروني وكلمة المرور.');
         const user = await api<User>('/auth/me');
         onLogin(user);
       }
@@ -137,11 +170,9 @@ export function NeonAuthScreen({ onLogin, onPreview, initialError }: Omit<AuthEn
     setError('');
     setNotice('');
     try {
-      const result = await (
-        await getNeonAuth()
-      ).sendVerificationEmail({ email, callbackURL: `${window.location.origin}/auth/verified` });
-      if (result.error) throw new Error();
-      setNotice('إذا كان الحساب يحتاج إلى تأكيد، فستصلك رسالة تأكيد البريد الإلكتروني.');
+      await requestActivation(email);
+      setActivationCode('');
+      changeMode('/auth/activation-code', 'إذا كان حسابك مسجّلًا، فسيصلك رمز جديد. أدخله ثم اختر كلمة مرورك.');
     } catch {
       setError('تعذر إرسال رسالة التأكيد. حاول مرة أخرى.');
     } finally {
@@ -150,17 +181,24 @@ export function NeonAuthScreen({ onLogin, onPreview, initialError }: Omit<AuthEn
   }
   const titles = {
     login: 'مرحبًا بعودتك.',
-    register: 'لنبدأ العمل معًا.',
+    register: 'فعّل حسابك.',
     forgot: 'نسيت كلمة المرور؟',
     reset: 'كلمة مرور جديدة.',
+    verify: 'أكّد بريدك الإلكتروني.',
+    activationCode: 'أدخل رمز التفعيل.',
+    newPassword: 'اختر كلمة مرورك.',
   };
   const descriptions = {
     login: 'سجّل الدخول ببريدك الإلكتروني لمتابعة أعمال الاتحاد.',
-    register: 'أنشئ حسابك وأكّد بريدك الإلكتروني للمتابعة.',
+    register: 'الخطوة ١ من ٣: أدخل بريد حسابك الذي أضافه المطوّر لإرسال رمز التفعيل.',
     forgot: 'أدخل بريدك الإلكتروني وسنرسل لك رابط الاستعادة.',
     reset: 'اختر كلمة مرور قوية لحماية حسابك.',
+    verify: 'أدخل رمز التأكيد المرسل إلى بريدك الإلكتروني لإكمال تفعيل الحساب.',
+    activationCode: 'الخطوة ٢ من ٣: أدخل الرمز المرسل إلى بريدك، ثم اختر كلمة مرور جديدة.',
+    newPassword: 'الخطوة ٣ من ٣: اختر كلمة مرور جديدة وأكّدها للدخول إلى مساحة العمل.',
   };
-  const invalidReset = mode === 'reset' && (!resetToken || !!linkError);
+  const invalidReset =
+    (mode === 'reset' && (!resetToken || !!linkError)) || (mode === 'newPassword' && !activationCode);
   return (
     <div className="login-page">
       <section className="login-form-side">
@@ -190,15 +228,13 @@ export function NeonAuthScreen({ onLogin, onPreview, initialError }: Omit<AuthEn
               </p>
             )}
             {invalidReset && (
-              <div className="form-error">رابط الاستعادة غير صالح أو انتهت صلاحيته. اطلب رابطًا جديدًا للمتابعة.</div>
+              <div className="form-error">
+                {mode === 'newPassword'
+                  ? 'أعد طلب رمز التفعيل لتعيين كلمة مرورك.'
+                  : 'رابط الاستعادة غير صالح أو انتهت صلاحيته. اطلب رابطًا جديدًا للمتابعة.'}
+              </div>
             )}
-            {mode === 'register' && (
-              <label>
-                الاسم الكامل
-                <input name="fullName" autoComplete="name" required minLength={3} maxLength={150} />
-              </label>
-            )}
-            {mode !== 'reset' && (
+            {mode !== 'reset' && mode !== 'newPassword' && (
               <label>
                 البريد الإلكتروني
                 <input
@@ -214,9 +250,27 @@ export function NeonAuthScreen({ onLogin, onPreview, initialError }: Omit<AuthEn
                 />
               </label>
             )}
-            {mode !== 'forgot' && !invalidReset && (
+            {(mode === 'verify' || mode === 'activationCode') && (
               <label>
-                {mode === 'reset' ? 'كلمة المرور الجديدة' : 'كلمة المرور'}
+                رمز التأكيد
+                <input
+                  name="otp"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  dir="ltr"
+                  required
+                  pattern="[0-9]{6}"
+                  minLength={6}
+                  maxLength={6}
+                  placeholder="000000"
+                  autoFocus
+                />
+              </label>
+            )}
+            {(mode === 'login' || mode === 'reset' || mode === 'newPassword') && !invalidReset && (
+              <label>
+                {mode === 'login' ? 'كلمة المرور' : 'كلمة المرور الجديدة'}
                 <div className="password-input">
                   <input
                     type={visible ? 'text' : 'password'}
@@ -237,7 +291,7 @@ export function NeonAuthScreen({ onLogin, onPreview, initialError }: Omit<AuthEn
                 </div>
               </label>
             )}
-            {mode === 'reset' && !invalidReset && (
+            {(mode === 'reset' || mode === 'newPassword') && !invalidReset && (
               <label>
                 تأكيد كلمة المرور
                 <input
@@ -261,11 +315,17 @@ export function NeonAuthScreen({ onLogin, onPreview, initialError }: Omit<AuthEn
                 )}
                 {mode === 'forgot'
                   ? 'إرسال رابط الاستعادة'
-                  : mode === 'reset'
-                    ? 'حفظ كلمة المرور'
-                    : mode === 'register'
-                      ? 'إنشاء حساب'
-                      : 'تسجيل الدخول'}
+                  : mode === 'newPassword'
+                    ? 'حفظ والدخول إلى مساحة العمل'
+                    : mode === 'activationCode'
+                      ? 'تأكيد الرمز والمتابعة'
+                      : mode === 'reset'
+                        ? 'حفظ كلمة المرور'
+                        : mode === 'verify'
+                          ? 'تأكيد البريد الإلكتروني'
+                          : mode === 'register'
+                            ? 'إرسال رمز التفعيل'
+                            : 'تسجيل الدخول'}
               </button>
             )}
           </form>
@@ -274,22 +334,40 @@ export function NeonAuthScreen({ onLogin, onPreview, initialError }: Omit<AuthEn
               <button className="text-link" disabled={busy} onClick={() => changeMode('/auth/forgot-password')}>
                 نسيت كلمة المرور؟
               </button>
-              <button className="text-link" disabled={busy} onClick={resendVerification}>
-                إعادة إرسال تأكيد البريد
+              <button className="text-link" disabled={busy} onClick={() => changeMode('/auth/activation-code')}>
+                لدي رمز تأكيد
               </button>
             </div>
           )}
-          {mode === 'login' || mode === 'register' ? (
-            <p className="login-switch">
-              {mode === 'register' ? 'لديك حساب بالفعل؟' : 'أول مرة هنا؟'}
-              <button
-                disabled={busy}
-                onClick={() => changeMode(mode === 'register' ? '/auth/sign-in' : '/auth/sign-up')}
-              >
-                {mode === 'register' ? 'تسجيل الدخول' : 'تفعيل حسابي'}
+          {mode === 'verify' && (
+            <div className="auth-help">
+              <button className="text-link" disabled={busy} onClick={resendVerification}>
+                إرسال رمز جديد
               </button>
-            </p>
-          ) : (
+            </div>
+          )}
+          {mode === 'activationCode' && (
+            <div className="auth-help">
+              <button className="text-link" disabled={busy} onClick={resendVerification}>
+                إرسال رمز جديد
+              </button>
+            </div>
+          )}
+          {mode === 'newPassword' && (
+            <div className="auth-help">
+              <button
+                className="text-link"
+                disabled={busy}
+                onClick={() => {
+                  setActivationCode('');
+                  changeMode('/auth/sign-up');
+                }}
+              >
+                طلب رمز تفعيل جديد
+              </button>
+            </div>
+          )}
+          {mode !== 'login' && (
             <p className="login-switch">
               <button disabled={busy} onClick={() => changeMode('/auth/sign-in')}>
                 العودة إلى تسجيل الدخول

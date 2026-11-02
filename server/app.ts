@@ -19,12 +19,14 @@ import { reviewRoutes } from './routes/reviews.js';
 import { storageUsageRoutes } from './routes/storageUsage.js';
 import { userRoutes } from './routes/users.js';
 import { voteRoutes } from './routes/votes.js';
+import type { ManagedAccounts } from './services/managedAccounts.js';
 
 type Dependencies = {
   query?: typeof databaseQuery;
   transaction?: typeof databaseTransaction;
   authProvider?: 'legacy' | 'neon';
   verifyNeon?: (token: string) => Promise<NeonIdentity>;
+  managedAccounts?: ManagedAccounts;
 };
 
 /** Content-Security-Policy for production; the Neon auth origin is allowed for browser-side sign-in calls. */
@@ -56,6 +58,7 @@ export function createApp(dependencies: Dependencies = {}) {
     transaction: dependencies.transaction || databaseTransaction,
     authProvider: dependencies.authProvider || config.authProvider,
     verifyNeon: dependencies.verifyNeon,
+    managedAccounts: dependencies.managedAccounts,
   };
 
   const app = express();

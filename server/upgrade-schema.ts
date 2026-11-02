@@ -1,4 +1,5 @@
 import { pool } from './db.js';
+import { authRevocationsSql } from './services/authSchema.js';
 
 /**
  * One-off, idempotent upgrade that adds yearly cycles and the developer role.
@@ -22,6 +23,7 @@ const OVERSIGHT_DOC_TYPES = [2];
 const client = await pool.connect();
 try {
   await client.query('BEGIN');
+  await client.query(authRevocationsSql);
 
   await client.query(`CREATE TABLE IF NOT EXISTS "Cycles" (
     "CycleId" SERIAL PRIMARY KEY,

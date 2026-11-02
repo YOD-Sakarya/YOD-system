@@ -63,6 +63,8 @@ export function authenticate(context: AppContext) {
     try {
       req.actor =
         context.authProvider === 'neon' ? await actorFromBearer(req, context) : await actorFromCookie(req, context);
+      if (req.actor.mustChangePassword && !(req.method === 'GET' && req.path === '/auth/me'))
+        throw new HttpError(403, 'يجب تغيير كلمة المرور المؤقتة قبل استخدام مساحة العمل.');
       next();
     } catch (error) {
       next(error instanceof jwt.JsonWebTokenError ? new HttpError(401, 'انتهت الجلسة. سجّل الدخول مجددًا.') : error);

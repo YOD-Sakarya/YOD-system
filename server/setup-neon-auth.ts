@@ -1,5 +1,6 @@
 import { pool } from './db.js';
 import { config } from './config.js';
+import { authRevocationsSql } from './services/authSchema.js';
 
 // Deliberate one-time setup. The HTTP server never performs schema changes.
 if (!process.env.DATABASE_URL)
@@ -8,6 +9,7 @@ if (!config.neonAuthUrl) throw new Error('Set NEON_AUTH_URL before setting up ma
 const client = await pool.connect();
 try {
   await client.query('BEGIN');
+  await client.query(authRevocationsSql);
   await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', ['yod:setup-neon-auth']);
   await client.query(`CREATE TABLE IF NOT EXISTS "AuthIdentities" (
     "Provider" text NOT NULL,

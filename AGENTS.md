@@ -91,7 +91,7 @@ Always run `npx tsc --noEmit && npm test && npm run build` before committing. Fo
 | `DATABASE_URL` (or `ConnectionStrings__DefaultConnection`) | Neon PostgreSQL |
 | `CLOUDINARY_URL` (or `CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET`, or `Cloudinary__*`) | file storage |
 | `APP_ORIGIN` | site origin for the CSRF check (same-host Origin is also accepted) |
-| `AUTH_PROVIDER` | `legacy` (default: username/email + password, cookie) or `neon` (Better Auth) |
+| `AUTH_PROVIDER` | `legacy` (default: username/email + password, cookie) or `neon` (managed Better Auth, explicit opt-in: it changes how every member signs in) |
 | `NEON_AUTH_URL` | required when `AUTH_PROVIDER=neon` |
 | `JWT_SECRET` (or `Jwt__Key`) | ≥ 32 chars, required in legacy mode |
 | `STORAGE_CLOUDINARY_LIMIT_GB` (default from plan credits, else 25), `STORAGE_DB_LIMIT_MB` (default 512) | storage bar limits |
@@ -177,12 +177,34 @@ Archived cycles are read-only for everyone except the developer (who may add/edi
   password returns **403 (not 401)**, because the client treats 401 as an expired session. Rate limit 20 / 15 min.
 - CSRF: non-GET requests need an `Origin` equal to `APP_ORIGIN` or to the request's own host.
 
-### 8.6 Better Auth / Neon mode (`AUTH_PROVIDER=neon`), implemented but **not enabled in production**
+### 8.6 Better Auth / Neon mode (`AUTH_PROVIDER=neon`, explicit opt-in; production still runs `legacy` until the switch-over)
 Browser talks to Neon Auth for sign-in/sign-up/forgot/reset password; the API verifies the Bearer JWT (JWKS) and maps the
 identity to a `Users` row: first by `AuthIdentities`, then by verified email; **an unknown email is rejected (403)**, nothing is auto-created.
 Password reset email is sent by Neon (link valid 15 min). Before enabling: add the site to Neon Console → Auth → Domains, confirm email
 sending, run `npm run auth:setup`, then every user activates once via "تفعيل حسابي" with the email stored on their account.
-Neon sign-in is email-only (no username).
+Neon sign-in is email-only (no username). Login includes forgot-password requests and reset with password confirmation.
+Activation (`/auth/sign-up`) asks only for the email of a managed account provisioned by the developer.
+The login page does not offer account creation or an activation link; accounts are provisioned by the developer.
+It requests a Better Auth password-reset OTP and opens `/auth/activation-code` immediately after sending.
+The code is checked as `forget-password`, then `/auth/new-password` asks for a new password and confirmation.
+Saving consumes that same code via `emailOtp.resetPassword`, verifies email ownership and signs in automatically.
+The code stays only in component memory; refreshing the password step requires requesting a new code.
+Unverified sign-in sends a code and opens the same activation flow. «لدي رمز تأكيد» opens its code step.
+`/auth/verify-email` remains available for older email-verification codes; it is not the activation route.
+Both the workspace seat and managed identity must exist before activation; a reset request never creates users.
+With `AUTH_PROVIDER=neon` the server refuses to start without NEON_AUTH_URL. `legacy` is the default **on purpose**: NEON_AUTH_URL is
+already set on Vercel, so a "neon unless told otherwise" default would switch every member on the next deploy. Switch-over steps and rollback: docs/BETTER_AUTH.md.
+Activation paths (both end in the same code → new password screens): (1) the developer adds/edits a seat or presses «إرسال دعوات التفعيل»
+(`POST /api/users/invite-pending`, 8 seats per press); (2) the member opens «تفعيل حسابي» which calls the public `POST /api/auth/activate`
+(`server/services/activation.ts`). Both create the Better Auth login when the seat has none (needs NEON_API_KEY, NEON_PROJECT_ID, NEON_BRANCH_ID),
+link it, replace the seat's stored legacy password with a marker, and mail the code. The public endpoint always answers the same, is rate limited
+and has a one-minute per-email cooldown. Placeholder/reserved email domains (example.com, .test, .invalid…) and emails shared by several seats are never
+provisioned; in `neon` mode the developer cannot save such an email. Changing a seat's email in `neon` mode = seat handover (old login revoked and deleted).
+Provisioned temporary Neon credentials use `Users.PasswordHash = !neon-temporary:<SHA-256 of managed password hash>`.
+For these seats the API compares the fingerprint with the credential in `neon_auth.account` (read only).
+Until it changes, only authenticated `GET /auth/me` is available; the UI requires a new password via Better Auth,
+revoking other sessions. After Neon stores the changed credential, the API removes the temporary marker.
+Email verification is still required. No plaintext password or managed password hash is stored by the app.
 
 ### 8.7 Search (client side, `src/lib/search.ts` + `src/lib/commands.ts`)
 One index over documents and votes of **all** cycles, committees, pages, role-aware actions (add document, new vote, change
@@ -228,7 +250,7 @@ Middleware order in `createApp()`: helmet → json/cookies → Origin check → 
 ## 12. Known limitations and backlog
 
 - **Vercel body limit ≈ 4.5 MB**: uploads larger than that fail on the hosted site although the API allows 100 MB. Fix: browser → Cloudinary signed uploads.
-- **Better Auth not enabled** (see 8.6); forgot-password therefore does not exist in legacy mode (no mail sender configured).
+- Better Auth requires deployment configuration and working Neon email delivery (see docs/BETTER_AUTH.md). Legacy fallback has no password reset mail sender.
 - Deleting a single document keeps its Cloudinary file; cycle deletion removes files.
 - `/api/cycles` document counts include hidden oversight documents (only the developer sees them).
 - "عرض كل النتائج" from search is limited to the year being viewed; search itself covers all years.
@@ -241,3 +263,8 @@ Middleware order in `createApp()`: helmet → json/cookies → Origin check → 
 `docs/YOD-system-guide-ar.pdf` (Arabic guide for people), `docs/YOD-presentation-users-ar.pptx` (for members, no developer role),
 `docs/YOD-presentation-full-ar.pptx` (everything incl. developer role). Sources and the regeneration steps are in `docs/README.md`.
 Update them when the behaviour they describe changes.
+
+### 8.9 Plain-text legacy passwords (security debt)
+Accounts migrated from the original .NET app kept their passwords as **plain text** in `Users.PasswordHash` (12 of 13 in production when
+checked). `npm run db:hash-passwords` (dry run) / `-- --apply` replaces them with scrypt hashes without changing any member's password. The
+column also holds `!neon-managed:` / `!neon-temporary:` markers (Better Auth seats), which are never touched. Never print stored values.

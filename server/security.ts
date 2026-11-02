@@ -1,5 +1,21 @@
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
-export type Actor = { userId: number; roleId: number; fullName: string; roleName: string };
+export type Actor = {
+  userId: number;
+  roleId: number;
+  fullName: string;
+  roleName: string;
+  mustChangePassword?: boolean;
+};
+
+/** Temporary managed credentials block workspace access until Neon stores a different password hash. */
+export function requiresPasswordChange(marker: string, managedHash: string | null): boolean {
+  const prefix = '!neon-temporary:';
+  return (
+    marker.startsWith(prefix) && (!managedHash || marker.slice(prefix.length) === credentialFingerprint(managedHash))
+  );
+}
+
+export const credentialFingerprint = (hash: string) => createHash('sha256').update(hash).digest('hex');
 /** The developer administers the whole system: users, cycles, deletions and storage. */
 export const DEVELOPER_ROLE_ID = 11;
 export const isDeveloper = (user: Actor) => user.roleId === DEVELOPER_ROLE_ID;
@@ -81,3 +97,6 @@ export function verifyPassword(password: string, stored: string) {
     expected = Buffer.from(stored);
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
+
+/** A stored password that is neither a scrypt hash nor a Better Auth marker is legacy plain text from the old .NET app. */
+export const isPlainTextPassword = (stored: string) => !stored.startsWith('scrypt:') && !stored.startsWith('!neon-');

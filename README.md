@@ -56,7 +56,7 @@ legacy equivalents when both are set.
 | `CLOUDINARY_CLOUD_NAME` | Falls back to `Cloudinary__CloudName` |
 | `CLOUDINARY_API_KEY` | Falls back to `Cloudinary__ApiKey` |
 | `CLOUDINARY_API_SECRET` | Falls back to `Cloudinary__ApiSecret` |
-| `AUTH_PROVIDER` | `legacy` by default; set to `neon` only after destination migration and auth setup |
+| `AUTH_PROVIDER` | `legacy` by default (username/email + password); set `neon` to switch every member to Better Auth, see `docs/BETTER_AUTH.md` |
 | `NEON_AUTH_URL` | Public HTTPS Managed Better Auth base URL, without a trailing slash |
 
 Explicit `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`
@@ -87,7 +87,8 @@ already contains the original tables and seeded roles/types/quarters.
 
 ## Accounts and permissions
 
-The following cookie/password behavior describes the default `legacy` provider.
+Better Auth (`neon`) is the default. See [activation and password reset setup](docs/BETTER_AUTH.md).
+The following cookie/password behavior describes the optional `legacy` provider.
 
 Sessions use a one-day signed JWT in an HTTP-only, SameSite=Lax cookie scoped
 to `/api`. Tokens are not stored in browser local storage. The API reloads the

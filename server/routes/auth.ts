@@ -5,14 +5,17 @@ import { cookieOptions, SESSION_COOKIE, startSession } from '../http/authenticat
 import type { AppContext } from '../http/context.js';
 import { fail, HttpError } from '../http/errors.js';
 import { type Actor, verifyPassword } from '../security.js';
-import { loginSchema } from '../schemas.js';
+import { activationSchema, loginSchema } from '../schemas.js';
+import { activateSeat } from '../services/activation.js';
+import { createManagedAccounts } from '../services/managedAccounts.js';
 
 /** Prefix of placeholder hashes for accounts managed by Neon; they can never sign in with a password. */
 const NEON_MANAGED_PREFIX = '!neon-managed:';
 
 /** Endpoints reachable without a session: auth settings, legacy login, closed registration and logout. */
-export function publicAuthRoutes({ query, transaction, authProvider }: AppContext) {
+export function publicAuthRoutes({ query, transaction, authProvider, managedAccounts }: AppContext) {
   const router = Router();
+  const managed = managedAccounts || createManagedAccounts(query);
 
   // The client reads this to decide which sign-in screen to show.
   router.get('/config', (_req, res) => {
@@ -51,6 +54,27 @@ export function publicAuthRoutes({ query, transaction, authProvider }: AppContex
     const actor: Actor = { userId: user.userId, fullName: user.fullName, roleId: user.roleId, roleName: user.roleName };
     startSession(res, actor.userId, user.password);
     res.json(actor);
+  });
+
+  // Member-triggered activation ("تفعيل حسابي"): creates the Better Auth login for a seat that has none and mails the code.
+  // The answer never depends on whether the email is registered, so this cannot be used to discover members.
+  const activationLimiter = rateLimit({
+    windowMs: 15 * 60000,
+    limit: 10,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: { message: 'محاولات كثيرة. حاول مرة أخرى بعد قليل.' },
+  });
+  router.post('/activate', activationLimiter, async (req, res) => {
+    if (authProvider !== 'neon') return fail(409, 'التفعيل عبر البريد متاح عند تفعيل Better Auth فقط.');
+    const { email } = activationSchema.parse(req.body);
+    try {
+      await activateSeat({ transaction, managed }, email);
+    } catch (error) {
+      // Mail or directory trouble must look the same as success from outside; log only the error class.
+      console.error('Activation request failed:', error instanceof Error ? error.name : 'UnknownError');
+    }
+    res.json({ message: 'إذا كان بريدك مسجّلًا في مساحة العمل فسيصلك رمز التفعيل خلال دقائق.' });
   });
 
   // Accounts are created by the developer only (see routes/users.ts); open sign-up would hand out roles.

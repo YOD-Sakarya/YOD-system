@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveAuthProvider } from './auth-provider.js';
 export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 dotenv.config({ path: path.join(root, '.env'), quiet: true });
 dotenv.config({ path: path.join(root, '..', 'Yod_System.env'), quiet: true });
@@ -41,8 +42,7 @@ function cloudinaryFromUrl(value: string | undefined) {
   }
 }
 const urlCloud = cloudinaryFromUrl(process.env.CLOUDINARY_URL);
-const authProvider = process.env.AUTH_PROVIDER || 'legacy';
-if (authProvider !== 'legacy' && authProvider !== 'neon') throw new Error('AUTH_PROVIDER must be legacy or neon.');
+const authProvider = resolveAuthProvider(process.env.AUTH_PROVIDER);
 function neonAuthUrl(value: string | undefined) {
   if (!value) return '';
   try {
@@ -68,6 +68,9 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET || process.env.Jwt__Key || '',
   authProvider: authProvider as 'legacy' | 'neon',
   neonAuthUrl: neonAuthUrl(process.env.NEON_AUTH_URL),
+  neonApiKey: process.env.NEON_API_KEY || '',
+  neonProjectId: process.env.NEON_PROJECT_ID || '',
+  neonBranchId: process.env.NEON_BRANCH_ID || '',
   database: process.env.DATABASE_URL
     ? { connectionString: process.env.DATABASE_URL }
     : parseConnectionString(process.env.ConnectionStrings__DefaultConnection || ''),

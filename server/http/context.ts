@@ -1,6 +1,7 @@
 import type { query as databaseQuery, transaction as databaseTransaction } from '../db.js';
 import type { Actor } from '../security.js';
 import type { NeonIdentity } from '../neon-auth.js';
+import type { ManagedAccounts } from '../services/managedAccounts.js';
 
 declare global {
   namespace Express {
@@ -17,4 +18,5 @@ export type AppContext = {
   transaction: typeof databaseTransaction;
   authProvider: 'legacy' | 'neon';
   verifyNeon?: (token: string) => Promise<NeonIdentity>;
+  managedAccounts?: ManagedAccounts;
 };

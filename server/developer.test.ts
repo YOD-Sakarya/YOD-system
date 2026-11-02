@@ -65,6 +65,7 @@ test('user administration, cycle creation and storage are closed to non-develope
       ['GET', '/api/users'],
       ['POST', '/api/users'],
       ['PUT', '/api/users/5'],
+      ['POST', '/api/users/5/reset-password'],
       ['GET', '/api/storage'],
       ['POST', '/api/cycles'],
       ['DELETE', '/api/cycles/1'],

@@ -5,6 +5,8 @@ import { generateKeyPair, SignJWT, type JWTPayload } from 'jose';
 import { createNeonVerifier, NeonAuthError, resolveNeonActor, type NeonIdentity } from './neon-auth.js';
 import { createApp } from './app.js';
 import { config } from './config.js';
+import { credentialFingerprint } from './security.js';
+import { authenticate } from './http/authenticate.js';
 import { query, transaction } from './db.js';
 
 const authUrl = 'https://test.neonauth.example/neondb/auth';
@@ -79,6 +81,36 @@ function database(fake: FakeQuery) {
       work({ query: (sql: string, params: unknown[] = []) => fake(sql, params) } as never)) as typeof transaction,
   };
 }
+test('temporary managed passwords restrict authenticated API requests until Neon confirms a changed credential', async () => {
+  for (const changed of [false, true]) {
+    let cleared = false;
+    const db = database(async sql => {
+      if (sql.includes('FROM "AuthIdentities"')) return { rows: [{ userId: 13 }] };
+      if (sql.includes('FROM "Users" u JOIN "Roles"'))
+        return { rows: [{ userId: 13, roleId: 11, fullName: 'Developer', roleName: 'Developer' }] };
+      if (sql.includes('AS marker'))
+        return { rows: [{ marker: '!neon-temporary:' + credentialFingerprint('initial') }] };
+      if (sql.includes('neon_auth.account')) return { rows: [{ password: changed ? 'new' : 'initial' }] };
+      if (sql.includes('UPDATE "Users"')) cleared = true;
+      return { rows: [] };
+    });
+    const context = { ...db, authProvider: 'neon' as const, verifyNeon: async () => identity };
+    for (const path of ['/auth/me', '/documents', '/users']) {
+      const request = { method: 'GET', path, get: () => 'Bearer test-token' };
+      let result: unknown;
+      await authenticate(context)(request as never, {} as never, error => {
+        result = error;
+      });
+      if (!changed && path !== '/auth/me') assert.equal((result as { status: number }).status, 403);
+      else assert.equal(result, undefined);
+      assert.equal(
+        (request as unknown as { actor: { mustChangePassword: boolean } }).actor.mustChangePassword,
+        !changed,
+      );
+    }
+    assert.equal(cleared, changed);
+  }
+});
 test('mapped subjects retain current DB role, ignoring provider admin claims', async () => {
   const actor = { userId: 4, fullName: 'Existing member', roleId: 7, roleName: 'Activities' };
   const actorResult = await resolveNeonActor(
@@ -86,6 +118,8 @@ test('mapped subjects retain current DB role, ignoring provider admin claims', a
     database(async sql => {
       if (sql.includes('FROM "AuthIdentities"')) return { rows: [{ userId: 4 }] };
       if (sql.includes('FROM "Users" u JOIN "Roles"')) return { rows: [actor] };
+      if (sql.includes('AS marker')) return { rows: [] };
+      if (sql.includes('FROM "AuthRevocations"')) return { rows: [] };
       assert.match(sql, /pg_advisory_xact_lock/);
       return { rows: [] };
     }),
@@ -145,6 +179,21 @@ test('unknown identities are rejected: signing up never creates a user or grants
     error => error instanceof NeonAuthError && error.status === 403,
   );
   assert.equal(inserted, false);
+});
+
+test('revoked managed subjects cannot reclaim a seat with an otherwise valid token', async () => {
+  await assert.rejects(
+    resolveNeonActor(
+      identity,
+      database(async sql => {
+        if (sql.includes('FROM "AuthRevocations"')) return { rows: [{}], rowCount: 1 };
+        if (sql.includes('FROM "Users"') || sql.includes('FROM "AuthIdentities"'))
+          throw new Error('Revoked subject must stop before linking');
+        return { rows: [] };
+      }),
+    ),
+    error => error instanceof NeonAuthError && error.status === 403,
+  );
 });
 test('missing setup table returns a safe service error rather than creating schema at runtime', async () => {
   await assert.rejects(

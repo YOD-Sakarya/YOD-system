@@ -136,3 +136,12 @@ test('until accepted, only the oversight committee and the developer can see the
   }
   assert.equal(canSeeRestrictedDocuments(member(1)), false);
 });
+
+test('only legacy plain-text passwords are flagged for hashing (hashes and Better Auth markers are left alone)', async () => {
+  const { isPlainTextPassword, hashPassword: hash } = await import('./security.js');
+  assert.equal(isPlainTextPassword('Some old password'), true);
+  assert.equal(isPlainTextPassword('123456'), true);
+  assert.equal(isPlainTextPassword(hash('anything long enough')), false);
+  assert.equal(isPlainTextPassword('!neon-managed:abc'), false);
+  assert.equal(isPlainTextPassword('!neon-temporary:abc'), false);
+});
