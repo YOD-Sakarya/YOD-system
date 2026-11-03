@@ -42,6 +42,20 @@ export const changeEmailSchema = z.object({
   currentPassword: z.string().min(1).max(256),
 });
 
+/**
+ * A username members choose themselves. No "@" or spaces: sign-in accepts a username or an email, and a username
+ * that looks like someone else's email would take over that person's email sign-in.
+ */
+export const changeUsernameSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(3)
+    .max(100)
+    .regex(/^[\p{L}\p{N}._-]+$/u),
+  currentPassword: z.string().min(1).max(256),
+});
+
 export const activationSchema = z.object({ email: z.email().max(254) });
 
 export const loginSchema = z.object({

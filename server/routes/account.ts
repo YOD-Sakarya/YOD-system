@@ -3,7 +3,7 @@ import { rateLimit } from 'express-rate-limit';
 import { startSession } from '../http/authenticate.js';
 import type { AppContext } from '../http/context.js';
 import { fail } from '../http/errors.js';
-import { changeEmailSchema, changePasswordSchema } from '../schemas.js';
+import { changeEmailSchema, changePasswordSchema, changeUsernameSchema } from '../schemas.js';
 import { hashPassword, verifyPassword } from '../security.js';
 
 /**
@@ -65,6 +65,24 @@ export function accountRoutes({ query, authProvider }: AppContext) {
     if (taken.length) fail(409, 'البريد الإلكتروني مستخدم بالفعل.');
     await query('UPDATE "Users" SET "Email"=$1 WHERE "UserId"=$2', [body.email, req.actor.userId]);
     res.json({ message: 'تم تحديث البريد الإلكتروني.', email: body.email });
+  });
+
+  // Documents, votes and reviews belong to the account, not the name, so renaming never touches them. The session
+  // identifies the account by id, so the member stays signed in.
+  router.put('/username', limiter, async (req, res) => {
+    ensureManagedLocally();
+    const parsed = changeUsernameSchema.safeParse(req.body);
+    if (!parsed.success) return fail(400, 'اسم المستخدم من 3 إلى 100 حرف أو رقم أو . _ - بدون مسافات أو @.');
+    const body = parsed.data;
+    const account = await loadAccount(req.actor.userId);
+    if (!verifyPassword(body.currentPassword, account.passwordHash)) fail(403, 'كلمة المرور الحالية غير صحيحة.');
+    const taken = await query('SELECT 1 FROM "Users" WHERE lower("Username")=lower($1) AND "UserId"<>$2', [
+      body.username,
+      req.actor.userId,
+    ]);
+    if (taken.length) fail(409, 'اسم المستخدم مستخدم بالفعل.');
+    await query('UPDATE "Users" SET "Username"=$1 WHERE "UserId"=$2', [body.username, req.actor.userId]);
+    res.json({ message: 'تم تحديث اسم المستخدم. استخدمه في تسجيل الدخول القادم.', username: body.username });
   });
 
   return router;

@@ -174,7 +174,7 @@ Archived cycles are read-only for everyone except the developer (who may add/edi
 - **Registration is closed** (`/api/auth/register` → 403). The developer creates accounts (`/api/users`) and hands seats to new people by editing the account (changing the username requires a new password).
 - Session: HTTP-only cookie `yod_session` (JWT, 1 day, `path=/api`). The JWT carries `ver = sha256(PasswordHash)[0:16]`, so
   **any password change signs out every other session**.
-- Self-service (`/api/account`): change own password and email, both requiring the current password. A wrong current
+- Self-service (`/api/account`): change own password, email and username, all requiring the current password. Usernames are 3-100 letters/digits/`._-` (no `@`, no spaces: sign-in accepts a username or an email, so a username must never look like someone's email) and unique case-insensitively; documents and votes follow the account, not the name. A wrong current
   password returns **403 (not 401)**, because the client treats 401 as an expired session. Rate limit 20 / 15 min.
 - CSRF: non-GET requests need an `Origin` equal to `APP_ORIGIN` or to the request's own host.
 
@@ -224,7 +224,7 @@ critical ≥ 90 %, full ≥ 100 %. Shown in the top bar and the "المساحة"
 ## 9. API (all under `/api`; JSON; errors are `{message}` in Arabic)
 
 Public: `GET /health`, `GET /auth/config`, `POST /auth/login`, `POST /auth/register` (403), `POST /auth/logout`.
-Authenticated: `GET /auth/me`, `GET /account`, `PUT /account/password`, `PUT /account/email`, `GET /catalog`,
+Authenticated: `GET /auth/me`, `GET /account`, `PUT /account/password`, `PUT /account/email`, `PUT /account/username`, `GET /catalog`,
 `GET|POST /documents`, `PUT|DELETE /documents/:id`, `GET /documents/:id/download`, `GET /documents/:id/view` (opened in a new tab; inline for PDF, images and text, any other type is sent as a download; Android phones may still download PDFs because their browsers have no PDF viewer), `POST /reviews`,
 `GET|POST /votes`, `POST /votes/:id/vote`, `PUT /votes/:id/close`, `DELETE /votes/:id` (developer), `GET /cycles`.
 Developer only (`requireDeveloper`): `POST /cycles`, `DELETE /cycles/:id`, `GET|POST /users`, `PUT /users/:id`, `GET /storage`.

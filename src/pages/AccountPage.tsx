@@ -48,7 +48,7 @@ function FeedbackLine({ feedback }: { feedback: Feedback }) {
   );
 }
 
-/** Every user can change their own email and password here (username and role are managed by the developer). */
+/** Every user can change their own username, email and password here (the role is managed by the developer). */
 export function AccountPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState('');
@@ -73,6 +73,14 @@ export function AccountPage() {
     setProfile(current => (current ? { ...current, email: result.email } : current));
     return result.message;
   });
+  const usernameForm = useAccountForm(async values => {
+    const result = await api<{ message: string; username: string }>('/account/username', {
+      method: 'PUT',
+      body: json(values),
+    });
+    setProfile(current => (current ? { ...current, username: result.username } : current));
+    return result.message;
+  });
   const passwordForm = useAccountForm(async values => {
     if (values.newPassword !== values.confirmPassword) throw new Error('كلمتا المرور الجديدتان غير متطابقتين.');
     const result = await api<{ message: string }>('/account/password', {
@@ -84,7 +92,7 @@ export function AccountPage() {
 
   return (
     <>
-      <PageHeading title="حسابي" description="غيّر بريدك الإلكتروني أو كلمة المرور متى شئت." />
+      <PageHeading title="حسابي" description="غيّر اسم المستخدم أو البريد الإلكتروني أو كلمة المرور متى شئت." />
       {error && (
         <p role="alert" className="form-error">
           {error}
@@ -122,6 +130,37 @@ export function AccountPage() {
             </section>
           ) : (
             <>
+              <section className="panel account-card" id="username">
+                <h2>تغيير اسم المستخدم</h2>
+                <form className="form-stack" onSubmit={usernameForm.submit}>
+                  <FeedbackLine feedback={usernameForm.feedback} />
+                  <label>
+                    اسم المستخدم الجديد
+                    <input
+                      name="username"
+                      required
+                      minLength={3}
+                      maxLength={100}
+                      pattern="[\p{L}\p{N}._\-]+"
+                      defaultValue={profile.username}
+                      dir="ltr"
+                      autoComplete="username"
+                    />
+                  </label>
+                  <p className="muted small-text">
+                    أحرف وأرقام و . _ - فقط، بدون مسافات أو @. مستنداتك وأصواتك تبقى كما هي.
+                  </p>
+                  <label>
+                    كلمة المرور الحالية
+                    <input name="currentPassword" type="password" required autoComplete="current-password" />
+                  </label>
+                  <button className="button primary" disabled={usernameForm.busy}>
+                    {usernameForm.busy ? <LoaderCircle size={17} className="spin" /> : <Check size={17} />}
+                    حفظ اسم المستخدم
+                  </button>
+                </form>
+              </section>
+
               <section className="panel account-card" id="email">
                 <h2>تغيير البريد الإلكتروني</h2>
                 <form className="form-stack" onSubmit={emailForm.submit}>

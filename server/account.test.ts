@@ -11,16 +11,26 @@ const actor: Actor = { userId: 7, fullName: 'Member', roleId: 7, roleName: 'أن
 const OLD = 'old password 123';
 
 /** One in-memory account behind the real routes, so password/email changes can be observed. */
-async function withAccount(run: (base: string, state: { hash: string; email: string }) => Promise<void>) {
-  const state = { hash: hashPassword(OLD), email: 'me@example.com' };
+async function withAccount(
+  run: (base: string, state: { hash: string; email: string; username: string }) => Promise<void>,
+) {
+  const state = { hash: hashPassword(OLD), email: 'me@example.com', username: 'member' };
   const database = (async (sql: string, values: unknown[] = []) => {
     if (sql.includes('FROM "Users" u JOIN "Roles"')) return [{ ...actor, passwordHash: state.hash }];
     if (sql.includes('AS "passwordHash" FROM "Users" WHERE'))
       return [
-        { fullName: 'Member', username: 'member', email: state.email, phoneWhatsapp: '', passwordHash: state.hash },
+        {
+          fullName: 'Member',
+          username: state.username,
+          email: state.email,
+          phoneWhatsapp: '',
+          passwordHash: state.hash,
+        },
       ];
     if (sql.startsWith('UPDATE "Users" SET "PasswordHash"')) state.hash = String(values[0]);
     if (sql.startsWith('UPDATE "Users" SET "Email"')) state.email = String(values[0]);
+    if (sql.startsWith('UPDATE "Users" SET "Username"')) state.username = String(values[0]);
+    if (sql.includes('lower("Username")=lower($1)')) return String(values[0]).toLowerCase() === 'taken' ? [{}] : [];
     if (sql.includes('lower(btrim("Email"))=lower($1)'))
       return String(values[0]).toLowerCase() === 'taken@example.com' ? [{}] : [];
     return [];
@@ -110,5 +120,23 @@ test('the account endpoint returns the profile without the password hash', async
     assert.equal(profile.email, 'me@example.com');
     assert.equal(profile.canChangeCredentials, true);
     assert.equal('passwordHash' in profile, false);
+  });
+});
+
+test('a member can rename their own account: password required, no duplicates, no unsafe names', async () => {
+  await withAccount(async (base, state) => {
+    const cookie = cookieFor(state.hash);
+    const rename = (username: string, currentPassword = OLD) =>
+      send(base, '/username', cookie, { username, currentPassword });
+    assert.equal((await rename('new.name', 'wrong wrong')).status, 403);
+    assert.equal((await rename('Taken')).status, 409, 'case-insensitive duplicate');
+    for (const unsafe of ['ab', 'has space', 'someone@example.com', 'x'.repeat(101)])
+      assert.equal((await rename(unsafe)).status, 400, unsafe);
+    assert.equal(state.username, 'member', 'nothing changed so far');
+    const ok = await rename('محمد_2026');
+    assert.equal(ok.status, 200);
+    assert.equal(state.username, 'محمد_2026');
+    // Same session keeps working: the account is identified by id, not by name.
+    assert.equal((await fetch(base + '/api/auth/me', { headers: { Cookie: cookie } })).status, 200);
   });
 });
