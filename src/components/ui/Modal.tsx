@@ -27,7 +27,9 @@ export function Modal({
   useEffect(() => {
     const element = ref.current!;
     const previous = document.activeElement as HTMLElement;
-    element.showModal();
+    // <dialog> is missing before Safari 15.4: show it as a plain open box rather than crashing the page.
+    if (typeof element.showModal === 'function') element.showModal();
+    else element.setAttribute('open', '');
     const cancel = (event: Event) => {
       event.preventDefault();
       if (!busyRef.current) closeRef.current();
@@ -35,7 +37,8 @@ export function Modal({
     element.addEventListener('cancel', cancel);
     return () => {
       element.removeEventListener('cancel', cancel);
-      element.close();
+      if (typeof element.close === 'function') element.close();
+      else element.removeAttribute('open');
       if (previous?.isConnected) previous.focus();
     };
   }, []);

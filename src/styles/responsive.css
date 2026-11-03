@@ -588,6 +588,7 @@
   }
   .login-form-side {
     padding: 26px 28px;
+    min-height: 100vh;
     min-height: 100dvh;
   }
   .login-form-wrap {

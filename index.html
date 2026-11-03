@@ -8,5 +8,17 @@
     <title>مساحة الاتحاد | اتحاد الطلاب اليمنيين في سكاريا</title>
     <link rel="icon" type="image/png" href="/union-logo.png" />
   </head>
-  <body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // If the app has not drawn anything after a few seconds (an old browser or a script error), say so instead of a blank page.
+      setTimeout(function () {
+        var root = document.getElementById('root');
+        if (root && !root.firstChild)
+          root.innerHTML =
+            '<p style="font-family:Arial,sans-serif;text-align:center;padding:48px 24px;line-height:1.9">تعذر فتح مساحة الاتحاد في هذا المتصفح.<br>حدّث متصفحك (Safari 15 أو أحدث) أو جرّب Chrome، ثم أعد تحميل الصفحة.</p>';
+      }, 6000);
+    </script>
+  </body>
 </html>

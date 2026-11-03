@@ -1,5 +1,6 @@
 import { createInternalNeonAuth, type VanillaBetterAuthClient } from '@neon/auth';
 import { BetterAuthVanillaAdapter } from '@neon/auth/vanilla/adapters';
+import { timeoutSignal } from './timeout';
 
 /** Server-advertised sign-in mode: legacy cookie login or Neon managed auth. */
 export type AuthSettings = { provider: 'legacy' | 'neon'; authUrl: string | null };
@@ -12,7 +13,7 @@ export function getAuthSettings(): Promise<AuthSettings> {
     settingsPromise = fetch('/api/auth/config', {
       cache: 'no-store',
       credentials: 'same-origin',
-      signal: AbortSignal.timeout(15000),
+      signal: timeoutSignal(15000),
     })
       .then(async response => {
         if (!response.ok) throw new Error('تعذر تحميل إعدادات تسجيل الدخول. تأكد من تشغيل الخادم.');
@@ -80,7 +81,7 @@ export async function requestActivation(email: string) {
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
       body: JSON.stringify({ email: email.trim() }),
-      signal: AbortSignal.timeout(30000),
+      signal: timeoutSignal(30000),
     });
   } catch {
     throw new Error('تعذر الاتصال بالخادم. حاول مرة أخرى.');

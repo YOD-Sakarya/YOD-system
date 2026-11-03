@@ -150,6 +150,7 @@
     top: 76px;
     inset-inline: 16px;
     width: auto;
+    max-height: calc(100vh - 96px);
     max-height: calc(100dvh - 96px);
   }
   .search-footer span:nth-child(2),

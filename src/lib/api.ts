@@ -1,4 +1,5 @@
 import { getAuthHeaders } from './auth';
+import { timeoutSignal } from './timeout';
 /** Error carrying the HTTP status (0 when the server was unreachable). */
 export class ApiError extends Error {
   constructor(
@@ -23,7 +24,7 @@ export async function api<T>(url: string, options: RequestInit = {}): Promise<T>
       ...options,
       credentials: 'same-origin',
       headers,
-      signal: options.signal || AbortSignal.timeout(120000),
+      signal: options.signal || timeoutSignal(120000),
     });
   } catch (error) {
     // A caller-initiated abort is not a connectivity problem; let it propagate unchanged.
