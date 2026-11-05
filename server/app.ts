@@ -18,6 +18,7 @@ import { cycleRoutes } from './routes/cycles.js';
 import { documentRoutes } from './routes/documents.js';
 import { logRoutes } from './routes/logs.js';
 import { reviewRoutes } from './routes/reviews.js';
+import { subscriptionRoutes } from './routes/subscriptions.js';
 import { storageUsageRoutes } from './routes/storageUsage.js';
 import { userRoutes } from './routes/users.js';
 import { voteRoutes } from './routes/votes.js';
@@ -107,6 +108,7 @@ export function createApp(dependencies: Dependencies = {}) {
   app.use('/api/votes', voteRoutes(context));
   app.use('/api/cycles', cycleRoutes(context));
   app.use('/api/budget', budgetRoutes(context));
+  app.use('/api/subscriptions', subscriptionRoutes(context));
   // Developer-only administration.
   app.use('/api/users', userRoutes(context));
   app.use('/api/storage', storageUsageRoutes(context));

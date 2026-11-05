@@ -1,4 +1,14 @@
-import { CalendarDays, ClipboardCheck, Files, LayoutDashboard, Settings2, Users, Vote, Wallet } from 'lucide-react';
+import {
+  CalendarDays,
+  ClipboardCheck,
+  Files,
+  GraduationCap,
+  LayoutDashboard,
+  Settings2,
+  Users,
+  Vote,
+  Wallet,
+} from 'lucide-react';
 
 /** Sidebar entries; also used to derive the page title from the current path. */
 export const navigation = [
@@ -12,6 +22,8 @@ export const navigation = [
 
 /** Shown only to people who may see the budgets (see canViewBudget). */
 export const budgetNavigation = { to: '/budget', label: 'الميزانية', icon: Wallet };
+
+export const subscriptionsNavigation = { to: '/subscriptions', label: 'الاشتراكات', icon: GraduationCap };
 
 /** Reached from the user card in the sidebar; only used for the page title. */
 export const accountNavigation = { to: '/account', label: 'حسابي' };

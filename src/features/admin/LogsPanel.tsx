@@ -13,6 +13,8 @@ const families = [
   { id: 'document', label: 'المستندات' },
   { id: 'review', label: 'المراجعات' },
   { id: 'vote', label: 'التصويت' },
+  { id: 'budget', label: 'الميزانية' },
+  { id: 'subscription', label: 'الاشتراكات' },
   { id: 'cycle', label: 'الأعوام' },
 ];
 const labels: Record<string, string> = {
@@ -34,11 +36,23 @@ const labels: Record<string, string> = {
   'vote.cast': 'تصويت',
   'vote.close': 'إغلاق جلسة',
   'vote.delete': 'حذف جلسة',
+  'budget.add': 'إضافة مالية',
+  'budget.delete': 'حذف حركة مالية',
+  'budget.attachment': 'مرفق مالي',
+  'subscription.add': 'تسجيل اشتراك',
+  'subscription.delete': 'حذف اشتراك',
   'cycle.create': 'بدء عام',
   'cycle.delete': 'حذف عام',
 };
 /** Destructive or suspicious events are highlighted so they stand out in a long list. */
-const alerts = new Set(['auth.login_failed', 'document.delete', 'vote.delete', 'cycle.delete']);
+const alerts = new Set([
+  'auth.login_failed',
+  'document.delete',
+  'vote.delete',
+  'cycle.delete',
+  'budget.delete',
+  'subscription.delete',
+]);
 const stamp = (value: string) =>
   new Intl.DateTimeFormat('ar', { dateStyle: 'medium', timeStyle: 'short', numberingSystem: 'arab' }).format(
     new Date(value),

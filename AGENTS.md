@@ -301,3 +301,13 @@ column also holds `!neon-managed:` / `!neon-temporary:` markers (Better Auth sea
   `openingFaza`; the form shows last year's closing balance as a reminder). There is no endpoint to change them afterwards.
   A year with budget entries cannot be deleted. Entries of finished years are read-only.
 - Money is `numeric(14,2)`; sums are rounded with `roundMoney`. Every add/delete/receipt view is written to the activity log.
+
+## Student subscriptions
+
+- Tables `Students` and `SubscriptionPayments` (db:upgrade). A payment has a total amount, a date and 1–4 quarters (`Quarters integer[]`);
+  a student cannot pay the same quarter twice in a year (409). Students are matched by name (case and spacing ignored); an unknown
+  name creates a new student.
+- Each payment also inserts an income line (`اشتراكات`, خزينة الاتحاد) and stores its id in `BudgetTransactionId`. Deleting the
+  payment deletes that line in the same transaction; the budget page refuses to delete such a line (409).
+- Same visibility and edit rules as the budget (`canViewBudget` / `canManageBudget`: only the financial officer changes anything).
+- `GET /api/subscriptions/export[?cycleId=]` returns an `.xlsx` (ExcelJS): sheet «الاشتراكات» (student × quarter) and «الدفعات».

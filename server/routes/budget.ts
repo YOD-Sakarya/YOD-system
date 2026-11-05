@@ -104,6 +104,8 @@ export function budgetRoutes({ query, audit }: AppContext) {
     );
     if (!row) fail(404, 'الحركة غير موجودة.');
     if (row.cycleId !== cycleId) fail(403, ARCHIVED_MESSAGE);
+    const linked = await query('SELECT 1 FROM "SubscriptionPayments" WHERE "BudgetTransactionId"=$1', [transactionId]);
+    if (linked.length) fail(409, 'هذه الحركة اشتراك طالب. احذفها من لوحة الاشتراكات.');
     await query('DELETE FROM "BudgetTransactions" WHERE "TransactionId"=$1', [transactionId]);
     // Cloud receipts are kept for recovery, like documents: removing the row does not destroy the remote file.
     await audit(req, {

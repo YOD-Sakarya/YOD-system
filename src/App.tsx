@@ -15,7 +15,13 @@ import { StorageAlert } from './components/layout/StorageAlert';
 import { Toast } from './components/layout/Toast';
 import { Topbar } from './components/layout/Topbar';
 import { demoData, demoUser } from './data/demo';
-import { accountNavigation, adminNavigation, budgetNavigation, navigation } from './data/navigation';
+import {
+  accountNavigation,
+  adminNavigation,
+  budgetNavigation,
+  navigation,
+  subscriptionsNavigation,
+} from './data/navigation';
 import AuthEntry from './features/auth/AuthEntry';
 import { LegacyLoginScreen } from './features/auth/LegacyLoginScreen';
 import { FirstLoginPassword } from './features/auth/FirstLoginPassword';
@@ -191,8 +197,9 @@ export default function App() {
   const data = scopedData;
   const pendingReviews = data.documents.filter(doc => doc.status === PENDING_STATUS).length;
   const title =
-    [...navigation, budgetNavigation, adminNavigation, accountNavigation].find(item => item.to === location.pathname)
-      ?.label || 'مساحة العمل';
+    [...navigation, budgetNavigation, subscriptionsNavigation, adminNavigation, accountNavigation].find(
+      item => item.to === location.pathname,
+    )?.label || 'مساحة العمل';
 
   return (
     <div className="workspace" dir="rtl">

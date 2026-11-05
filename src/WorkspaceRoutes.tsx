@@ -4,6 +4,7 @@ import { isDeveloper } from './lib/roles';
 import { AccountPage } from './pages/AccountPage';
 import { AdminPage } from './pages/AdminPage';
 import { BudgetPage } from './pages/BudgetPage';
+import { SubscriptionsPage } from './pages/SubscriptionsPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { CommitteesPage } from './pages/CommitteesPage';
 import { DocumentsPage } from './pages/DocumentsPage';
@@ -95,6 +96,9 @@ export function WorkspaceRoutes({
       <Route path="/calendar" element={<CalendarPage data={data} onDocument={onDocument} />} />
       <Route path="/committees" element={<CommitteesPage data={data} />} />
       <Route path="/account" element={<AccountPage />} />
+      {canViewBudget(user) && (
+        <Route path="/subscriptions" element={<SubscriptionsPage user={user} cycleId={cycleId} onToast={onToast} />} />
+      )}
       {canViewBudget(user) && (
         <Route path="/budget" element={<BudgetPage user={user} cycleId={cycleId} onToast={onToast} />} />
       )}

@@ -1,6 +1,7 @@
 import { pool } from './db.js';
 import { auditIndexSql, auditLogsSql } from './services/audit.js';
 import { budgetTablesSql } from './services/budget.js';
+import { subscriptionTablesSql } from './services/subscriptions.js';
 import { authRevocationsSql } from './services/authSchema.js';
 
 /**
@@ -31,6 +32,8 @@ try {
   await client.query(auditIndexSql);
   // Budgets (union treasury and صندوق فزعة) per yearly cycle.
   for (const statement of budgetTablesSql) await client.query(statement);
+  // Student subscriptions (each payment also creates a treasury income line).
+  for (const statement of subscriptionTablesSql) await client.query(statement);
 
   await client.query(`CREATE TABLE IF NOT EXISTS "Cycles" (
     "CycleId" SERIAL PRIMARY KEY,

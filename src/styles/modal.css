@@ -332,3 +332,23 @@
   width: 24px;
   height: 24px;
 }
+
+/* Quarter tick-boxes in the subscription form. */
+.quarter-picker {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.quarter-picker legend {
+  font-size: 13px;
+  font-weight: 550;
+  margin-bottom: 8px;
+  padding: 0;
+}
+.form-stack label.check-row {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  font-weight: 450;
+}
