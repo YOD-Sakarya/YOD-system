@@ -79,3 +79,17 @@ export type StorageReport = {
   database: Usage | null;
   errors: { files: string | null; database: string | null };
 };
+/** One line of the developer's activity log. */
+export type AuditLog = {
+  id: number;
+  createdAt: string;
+  actorUserId: number | null;
+  actorName: string;
+  actorRole: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  summary: string;
+  details: Record<string, unknown> | null;
+  ip: string;
+};

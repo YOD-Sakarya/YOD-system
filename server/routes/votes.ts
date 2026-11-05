@@ -22,7 +22,7 @@ const canManageSession = (actor: Actor, session: { CreatedByUserId: number }) =>
   canManageVotes(actor) || session.CreatedByUserId === actor.userId;
 
 /** Vote sessions: create, vote (one changeable vote per member), close with a decision, delete. */
-export function voteRoutes({ query, transaction }: AppContext) {
+export function voteRoutes({ query, transaction, audit }: AppContext) {
   const router = Router();
 
   router.get('/', async (req, res) => {
@@ -47,13 +47,20 @@ export function voteRoutes({ query, transaction }: AppContext) {
         await client.query('INSERT INTO "VoteOptions" ("Text","VoteSessionId") VALUES ($1,$2)', [option, session.id]);
       return session.id;
     });
+    await audit(req, {
+      action: 'vote.create',
+      targetType: 'vote_session',
+      targetId: sessionId,
+      summary: `أنشأ جلسة التصويت «${body.title}»`,
+      details: { kind: body.kind, options: body.options.length },
+    });
     res.status(201).json({ sessionId });
   });
 
   router.post('/:id/vote', async (req, res) => {
     const sessionId = id(req.params.id);
     const body = ballotSchema.parse(req.body);
-    await transaction(async client => {
+    const votedTitle = await transaction(async client => {
       const session = await lockSession(client, sessionId);
       if (!canCastVote(req.actor, session.Kind))
         fail(403, 'لجنة الرقابة تطّلع على التصويت على القرارات ولا تصوّت فيه.');
@@ -76,13 +83,21 @@ export function voteRoutes({ query, transaction }: AppContext) {
         'INSERT INTO "Votes" ("VoterUserId","VoteSessionId","VoteOptionId","Comment","VotedAt") VALUES ($1,$2,$3,$4,NOW())',
         [req.actor.userId, sessionId, body.optionId, body.comment],
       );
+      return session.Title as string;
+    });
+    // Who voted is logged, not what they chose.
+    await audit(req, {
+      action: 'vote.cast',
+      targetType: 'vote_session',
+      targetId: sessionId,
+      summary: `صوّت في «${votedTitle}»`,
     });
     res.json({ message: 'تم حفظ صوتك.' });
   });
 
   router.put('/:id/close', async (req, res) => {
     const sessionId = id(req.params.id);
-    await transaction(async client => {
+    const closed = await transaction(async client => {
       const session = await lockSession(client, sessionId);
       if (!canManageSession(req.actor, session)) fail(403, 'ليس لديك صلاحية إغلاق الجلسة.');
       if (session.Status !== STATUS_OPEN) fail(409, 'الجلسة مغلقة بالفعل.');
@@ -98,6 +113,14 @@ export function voteRoutes({ query, transaction }: AppContext) {
         'UPDATE "VoteSessions" SET "Status"=$1,"ClosedAt"=NOW(),"Decision"=$2 WHERE "VoteSessionId"=$3',
         [STATUS_CLOSED, voteDecision(tally), sessionId],
       );
+      return { title: session.Title as string, decision: voteDecision(tally) };
+    });
+    await audit(req, {
+      action: 'vote.close',
+      targetType: 'vote_session',
+      targetId: sessionId,
+      summary: `أغلق جلسة «${closed.title}» والنتيجة: ${closed.decision}`,
+      details: { decision: closed.decision },
     });
     res.json({ message: 'تم إغلاق الجلسة.' });
   });
@@ -106,12 +129,19 @@ export function voteRoutes({ query, transaction }: AppContext) {
     // Checked before touching the database: only the developer deletes sessions.
     if (!canDelete(req.actor)) fail(403, 'حذف الجلسات متاح للمطوّر فقط.');
     const sessionId = id(req.params.id);
-    await transaction(async client => {
+    const deletedTitle = await transaction(async client => {
       const session = await lockSession(client, sessionId);
       // Delete children first: votes and options reference the session.
       await client.query('DELETE FROM "Votes" WHERE "VoteSessionId"=$1', [sessionId]);
       await client.query('DELETE FROM "VoteOptions" WHERE "VoteSessionId"=$1', [sessionId]);
       await client.query('DELETE FROM "VoteSessions" WHERE "VoteSessionId"=$1', [sessionId]);
+      return session.Title as string;
+    });
+    await audit(req, {
+      action: 'vote.delete',
+      targetType: 'vote_session',
+      targetId: sessionId,
+      summary: `حذف جلسة التصويت «${deletedTitle}»`,
     });
     res.sendStatus(204);
   });

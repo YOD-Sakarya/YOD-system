@@ -23,7 +23,9 @@ export function DocumentDialog({
 }: DialogProps & { document: Document; user: User; archived: boolean; onEdit: (d: Document) => void }) {
   const [error, setError] = useState(''),
     [busy, setBusy] = useState(false),
-    [confirm, setConfirm] = useState(false);
+    [confirm, setConfirm] = useState(false),
+    // Developer only: the reviewer role a decision is recorded for.
+    [asRoleId, setAsRoleId] = useState(0);
   const developer = isDeveloper(user);
   // Roles that must review this document (proposals: leadership; oversight uploads: the other oversight members).
   const reviewers = reviewerRolesFor(doc);
@@ -31,7 +33,10 @@ export function DocumentDialog({
   const canEdit =
     (doc.ownerUserId === user.userId || REVIEWER_ROLE_IDS.includes(user.roleId) || developer) &&
     (!archived || developer);
-  const myReview = doc.reviews.find(r => r.reviewerId === user.userId);
+  const actingRole = developer ? asRoleId || reviewers[0] : user.roleId;
+  const myReview = developer
+    ? doc.reviews.find(r => r.roleId === actingRole)
+    : doc.reviews.find(r => r.reviewerId === user.userId);
   async function review(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (preview) return;
@@ -39,7 +44,10 @@ export function DocumentDialog({
     setError('');
     const values = Object.fromEntries(new FormData(event.currentTarget));
     try {
-      await api('/reviews', { method: 'POST', body: json({ documentId: doc.docId, ...values }) });
+      await api('/reviews', {
+        method: 'POST',
+        body: json({ documentId: doc.docId, ...values, ...(developer ? { asRoleId: actingRole } : {}) }),
+      });
       await onSaved('تم حفظ المراجعة.');
     } catch (e) {
       setError(errorText(e));
@@ -211,9 +219,21 @@ export function DocumentDialog({
                 </div>
               );
             })}
-            {reviewers.includes(user.roleId) && !archived && (
-              <form className="review-form form-stack" onSubmit={review}>
-                <h3>{myReview ? 'تحديث مراجعتك' : 'أضف مراجعتك'}</h3>
+            {(developer || (reviewers.includes(user.roleId) && !archived)) && (
+              <form key={actingRole} className="review-form form-stack" onSubmit={review}>
+                <h3>{developer ? 'قرار المطوّر نيابةً عن دور' : myReview ? 'تحديث مراجعتك' : 'أضف مراجعتك'}</h3>
+                {developer && (
+                  <label>
+                    الدور
+                    <select value={actingRole} onChange={event => setAsRoleId(Number(event.target.value))}>
+                      {reviewers.map(roleId => (
+                        <option key={roleId} value={roleId}>
+                          {REVIEWER_TITLES[roleId]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
                 <label>
                   القرار
                   <select name="decision" defaultValue={myReview?.decision || 'مقبول'}>

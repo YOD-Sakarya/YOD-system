@@ -11,7 +11,7 @@ import { hashPassword, verifyPassword } from '../security.js';
  * Both need the current password. In Neon mode the auth service owns credentials, so they are refused here.
  * A wrong current password answers 403 (not 401), which the client would treat as an expired session.
  */
-export function accountRoutes({ query, authProvider }: AppContext) {
+export function accountRoutes({ query, authProvider, audit }: AppContext) {
   const router = Router();
   // Same brute-force protection as sign-in: these endpoints also check a password.
   const limiter = rateLimit({
@@ -50,6 +50,12 @@ export function accountRoutes({ query, authProvider }: AppContext) {
     await query('UPDATE "Users" SET "PasswordHash"=$1 WHERE "UserId"=$2', [passwordHash, req.actor.userId]);
     // Older sessions (other devices) stop working; this one continues with a fresh cookie.
     startSession(res, req.actor.userId, passwordHash);
+    await audit(req, {
+      action: 'account.password',
+      targetType: 'user',
+      targetId: req.actor.userId,
+      summary: 'غيّر كلمة مروره',
+    });
     res.json({ message: 'تم تغيير كلمة المرور.' });
   });
 
@@ -64,6 +70,13 @@ export function accountRoutes({ query, authProvider }: AppContext) {
     ]);
     if (taken.length) fail(409, 'البريد الإلكتروني مستخدم بالفعل.');
     await query('UPDATE "Users" SET "Email"=$1 WHERE "UserId"=$2', [body.email, req.actor.userId]);
+    await audit(req, {
+      action: 'account.email',
+      targetType: 'user',
+      targetId: req.actor.userId,
+      summary: `غيّر بريده الإلكتروني إلى ${body.email}`,
+      details: { from: account.email, to: body.email },
+    });
     res.json({ message: 'تم تحديث البريد الإلكتروني.', email: body.email });
   });
 
@@ -82,6 +95,13 @@ export function accountRoutes({ query, authProvider }: AppContext) {
     ]);
     if (taken.length) fail(409, 'اسم المستخدم مستخدم بالفعل.');
     await query('UPDATE "Users" SET "Username"=$1 WHERE "UserId"=$2', [body.username, req.actor.userId]);
+    await audit(req, {
+      action: 'account.username',
+      targetType: 'user',
+      targetId: req.actor.userId,
+      summary: `غيّر اسم المستخدم من «${account.username}» إلى «${body.username}»`,
+      details: { from: account.username, to: body.username },
+    });
     res.json({ message: 'تم تحديث اسم المستخدم. استخدمه في تسجيل الدخول القادم.', username: body.username });
   });
 

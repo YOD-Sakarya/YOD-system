@@ -1,4 +1,5 @@
 import { pool } from './db.js';
+import { auditIndexSql, auditLogsSql } from './services/audit.js';
 import { authRevocationsSql } from './services/authSchema.js';
 
 /**
@@ -24,6 +25,9 @@ const client = await pool.connect();
 try {
   await client.query('BEGIN');
   await client.query(authRevocationsSql);
+  // Activity log (who did what); read by the developer in the admin console.
+  await client.query(auditLogsSql);
+  await client.query(auditIndexSql);
 
   await client.query(`CREATE TABLE IF NOT EXISTS "Cycles" (
     "CycleId" SERIAL PRIMARY KEY,

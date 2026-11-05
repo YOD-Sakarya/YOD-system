@@ -15,10 +15,12 @@ import { accountRoutes } from './routes/account.js';
 import { catalogRoutes } from './routes/catalog.js';
 import { cycleRoutes } from './routes/cycles.js';
 import { documentRoutes } from './routes/documents.js';
+import { logRoutes } from './routes/logs.js';
 import { reviewRoutes } from './routes/reviews.js';
 import { storageUsageRoutes } from './routes/storageUsage.js';
 import { userRoutes } from './routes/users.js';
 import { voteRoutes } from './routes/votes.js';
+import { createAudit } from './services/audit.js';
 import type { ManagedAccounts } from './services/managedAccounts.js';
 
 type Dependencies = {
@@ -53,10 +55,12 @@ function securityHeaders(context: AppContext) {
  * through `dependencies`, which is how the tests run without a real database.
  */
 export function createApp(dependencies: Dependencies = {}) {
+  const query = dependencies.query || databaseQuery;
   const context: AppContext = {
-    query: dependencies.query || databaseQuery,
+    query,
     transaction: dependencies.transaction || databaseTransaction,
     authProvider: dependencies.authProvider || config.authProvider,
+    audit: createAudit(query),
     verifyNeon: dependencies.verifyNeon,
     managedAccounts: dependencies.managedAccounts,
   };
@@ -104,6 +108,7 @@ export function createApp(dependencies: Dependencies = {}) {
   // Developer-only administration.
   app.use('/api/users', userRoutes(context));
   app.use('/api/storage', storageUsageRoutes(context));
+  app.use('/api/logs', logRoutes(context));
   app.use('/api', (_req, res) => {
     res.status(404).json({ message: 'المسار غير موجود.' });
   });

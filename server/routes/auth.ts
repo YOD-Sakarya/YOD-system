@@ -13,7 +13,7 @@ import { createManagedAccounts } from '../services/managedAccounts.js';
 const NEON_MANAGED_PREFIX = '!neon-managed:';
 
 /** Endpoints reachable without a session: auth settings, legacy login, closed registration and logout. */
-export function publicAuthRoutes({ query, transaction, authProvider, managedAccounts }: AppContext) {
+export function publicAuthRoutes({ query, transaction, authProvider, managedAccounts, audit }: AppContext) {
   const router = Router();
   const managed = managedAccounts || createManagedAccounts(query);
 
@@ -49,11 +49,20 @@ export function publicAuthRoutes({ query, transaction, authProvider, managedAcco
       [body.username],
     );
     const user = candidates.find(row => row.byUsername) ?? (candidates.length === 1 ? candidates[0] : undefined);
-    if (!user || user.password.startsWith(NEON_MANAGED_PREFIX) || !verifyPassword(body.password, user.password))
+    if (!user || user.password.startsWith(NEON_MANAGED_PREFIX) || !verifyPassword(body.password, user.password)) {
+      // The attempted name is kept so repeated guessing against one account is visible; the password never is.
+      await audit(req, {
+        action: 'auth.login_failed',
+        summary: `محاولة دخول فاشلة بالاسم «${body.username}»`,
+        details: { identifier: body.username, knownAccount: Boolean(user) },
+        actor: { userId: user?.userId, fullName: user?.fullName ?? body.username, roleName: user?.roleName },
+      });
       return fail(401, 'اسم المستخدم أو كلمة المرور غير صحيحة.');
+    }
     const actor: Actor = { userId: user.userId, fullName: user.fullName, roleId: user.roleId, roleName: user.roleName };
     if (isTemporaryPassword(user.password)) actor.mustChangePassword = true;
     startSession(res, actor.userId, user.password);
+    await audit(req, { action: 'auth.login', summary: 'سجّل الدخول', actor });
     res.json(actor);
   });
 

@@ -24,7 +24,7 @@ const initialStatus = (docTypeId: number, ownerRoleId: number) =>
   requiredReviewerRoles(docTypeId, ownerRoleId).length ? STATUS_PENDING : STATUS_NO_REVIEW;
 
 /** Document CRUD plus file download. File contents live in Cloudinary; the database stores only the URL. */
-export function documentRoutes({ query, transaction }: AppContext) {
+export function documentRoutes({ query, transaction, audit }: AppContext) {
   const router = Router();
 
   /** Loads a document the actor is allowed to see; hidden oversight documents look like they do not exist. */
@@ -89,6 +89,13 @@ export function documentRoutes({ query, transaction }: AppContext) {
         cycleId,
       ],
     );
+    await audit(req, {
+      action: 'document.create',
+      targetType: 'document',
+      targetId: doc.docId,
+      summary: `رفع المستند «${body.title}»`,
+      details: { docTypeId: body.docTypeId, cycleId },
+    });
     res.status(201).json(doc);
   });
 
@@ -119,6 +126,13 @@ export function documentRoutes({ query, transaction }: AppContext) {
       // An edited document must be reviewed again.
       await client.query('DELETE FROM "Reviews" WHERE "DocId"=$1', [docId]);
     });
+    await audit(req, {
+      action: 'document.update',
+      targetType: 'document',
+      targetId: docId,
+      summary: `عدّل المستند «${body.title}»`,
+      details: { previousTitle: doc.Title, newFile: Boolean(req.file) },
+    });
     res.json({ docId });
   });
 
@@ -132,18 +146,37 @@ export function documentRoutes({ query, transaction }: AppContext) {
     });
     if (!mayDelete) fail(403, 'لا يمكن حذف هذا المستند: يحذف صاحبه مستنداته قبل قبولها فقط، وبعد ذلك للمطوّر وحده.');
     await query('DELETE FROM "Documents" WHERE "DocId"=$1', [docId]);
+    await audit(req, {
+      action: 'document.delete',
+      targetType: 'document',
+      targetId: docId,
+      summary: `حذف المستند «${doc.Title}»`,
+      details: { ownerUserId: doc.OwnerUserId, status: doc.Status },
+    });
     // Retain cloud assets for recovery; database deletion does not destroy a remote file.
     res.sendStatus(204);
   });
 
   router.get('/:id/download', async (req, res) => {
     const doc = await getDocument(id(req.params.id), req.actor);
+    await audit(req, {
+      action: 'document.download',
+      targetType: 'document',
+      targetId: doc.DocId,
+      summary: `نزّل المستند «${doc.Title}»`,
+    });
     await sendDocument(res, { FilePath: doc.FilePath, Title: doc.Title });
   });
 
   // Same access rules as the download; the browser displays the file instead of saving it (PDF, images and text only).
   router.get('/:id/view', async (req, res) => {
     const doc = await getDocument(id(req.params.id), req.actor);
+    await audit(req, {
+      action: 'document.view',
+      targetType: 'document',
+      targetId: doc.DocId,
+      summary: `عرض المستند «${doc.Title}»`,
+    });
     await sendDocument(res, { FilePath: doc.FilePath, Title: doc.Title }, { inline: true });
   });
 

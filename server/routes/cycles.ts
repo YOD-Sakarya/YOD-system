@@ -15,7 +15,7 @@ const newCycleSchema = z.object({
  * Yearly cycles. Everyone can list them (to browse previous years); only the developer can start a new one.
  * Starting a cycle archives the previous one: nothing is deleted, old documents simply become read-only.
  */
-export function cycleRoutes({ query, transaction }: AppContext) {
+export function cycleRoutes({ query, transaction, audit }: AppContext) {
   const router = Router();
 
   router.get('/', async (_req, res) => {
@@ -49,6 +49,13 @@ export function cycleRoutes({ query, transaction }: AppContext) {
         [body.name, body.startDate],
       );
       return created.rows[0].id as number;
+    });
+    await audit(req, {
+      action: 'cycle.create',
+      targetType: 'cycle',
+      targetId: cycleId,
+      summary: `بدأ العام «${body.name}»`,
+      details: { startDate: body.startDate },
     });
     res.status(201).json({ cycleId });
   });
@@ -93,6 +100,18 @@ export function cycleRoutes({ query, transaction }: AppContext) {
     });
     // Files are removed only after the database change is committed.
     const cloud = await deleteCloudFiles(summary.files);
+    await audit(req, {
+      action: 'cycle.delete',
+      targetType: 'cycle',
+      targetId: cycleId,
+      summary: `حذف العام «${summary.name}» بما فيه ${summary.documents} مستندًا و${summary.votes} جلسة تصويت`,
+      details: {
+        documents: summary.documents,
+        votes: summary.votes,
+        filesRemoved: cloud.removed,
+        filesFailed: cloud.failed,
+      },
+    });
     res.json({
       name: summary.name,
       documents: summary.documents,

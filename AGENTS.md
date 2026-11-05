@@ -274,3 +274,15 @@ Update them when the behaviour they describe changes.
 Accounts migrated from the original .NET app kept their passwords as **plain text** in `Users.PasswordHash` (12 of 13 in production when
 checked). `npm run db:hash-passwords` (dry run) / `-- --apply` replaces them with scrypt hashes without changing any member's password. The
 column also holds `!neon-managed:` / `!neon-temporary:` markers (Better Auth seats), which are never touched. Never print stored values.
+
+## Activity log and developer super power
+
+- **Activity log.** `AuditLogs` (created by `npm run db:upgrade`; `services/audit.ts`) records who did what: sign-ins (and failed
+  ones, under the attempted name), account changes, user administration, document create/edit/delete/view/download,
+  reviews, vote create/cast/close/delete and year start/delete. Routes call `audit(req, { action, summary, details })` **after** the
+  action succeeded; a logging failure is swallowed (and printed) so it can never break a request, e.g. before the table exists.
+  Never log passwords, tokens or what a member voted. The developer reads it at `GET /api/logs` (filters `action` family,
+  `userId`, `q`, `before` cursor) and in the admin console tab «سجل النشاط».
+- **Developer reviews.** The developer may accept or reject any document in the name of any reviewer role it needs
+  (`POST /api/reviews` with `asRoleId`, also for archived years). The review is stored on the seat holding that role so
+  `reviewStatus` is unchanged; the log line says «نيابةً عن …» and names the developer as the actor.

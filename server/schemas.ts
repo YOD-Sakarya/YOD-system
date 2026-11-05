@@ -30,6 +30,8 @@ export const reviewSchema = z.object({
   documentId: z.number().int().positive(),
   decision: z.enum(['مقبول', 'مرفوض']),
   comment: z.string().max(4000),
+  /** Developer only: the reviewer role this decision is recorded for. */
+  asRoleId: z.number().int().positive().optional(),
 });
 
 export const changePasswordSchema = z.object({

@@ -30,7 +30,7 @@ const userSelection = `SELECT u."UserId" AS "userId", u."FullName" AS "fullName"
  * User administration for the developer. Each year the people in the seats change, so a seat (user row) can be
  * handed to a new person at any time by editing the account in place. Documents stay attached to the account.
  */
-export function userRoutes({ query, transaction, authProvider, managedAccounts }: AppContext) {
+export function userRoutes({ query, transaction, authProvider, managedAccounts, audit }: AppContext) {
   const router = Router();
   router.use(requireDeveloper);
   const managed = managedAccounts || createManagedAccounts(query);
@@ -91,6 +91,13 @@ export function userRoutes({ query, transaction, authProvider, managedAccounts }
           created.rows[0].id,
         ]);
       return created.rows[0].id as number;
+    });
+    await audit(req, {
+      action: 'user.create',
+      targetType: 'user',
+      targetId: userId,
+      summary: `أنشأ حساب «${body.fullName}» (${body.username})`,
+      details: { roleId: body.roleId, email: body.email },
     });
     res.status(201).json({ userId, message: authProvider === 'neon' ? await finish(body.email) : 'تم إنشاء الحساب.' });
   });
@@ -189,6 +196,14 @@ export function userRoutes({ query, transaction, authProvider, managedAccounts }
         if (table.rows[0].name) await client.query('DELETE FROM "AuthIdentities" WHERE "UserId"=$1', [userId]);
       }
     });
+    await audit(req, {
+      action: 'user.update',
+      targetType: 'user',
+      targetId: userId,
+      summary: `عدّل حساب «${body.fullName}» (${body.username})`,
+      // Only whether a password was set, never the password itself.
+      details: { roleId: body.roleId, email: body.email, passwordChanged: Boolean(body.password) },
+    });
     res.json({ message: activation ? await finish(body.email, oldSubject) : 'تم حفظ بيانات المستخدم.' });
   });
 
@@ -236,16 +251,26 @@ export function userRoutes({ query, transaction, authProvider, managedAccounts }
         userId,
       ]);
       if (!updated.length) fail(404, 'المستخدم غير موجود.');
-      return res
-        .set('Cache-Control', 'no-store')
-        .json({
-          temporaryPassword,
-          message: 'تم إنشاء كلمة مرور مؤقتة. أرسلها للمستخدم، وسيختار كلمة جديدة عند أول دخول.',
-        });
+      await audit(req, {
+        action: 'user.reset_password',
+        targetType: 'user',
+        targetId: userId,
+        summary: 'أنشأ كلمة مرور مؤقتة جديدة لمستخدم',
+      });
+      return res.set('Cache-Control', 'no-store').json({
+        temporaryPassword,
+        message: 'تم إنشاء كلمة مرور مؤقتة. أرسلها للمستخدم، وسيختار كلمة جديدة عند أول دخول.',
+      });
     }
     const [user] = await query('SELECT "Email" AS email FROM "Users" WHERE "UserId"=$1', [id(req.params.id)]);
     if (!user) fail(404, 'المستخدم غير موجود.');
     await managed.sendActivation(user.email);
+    await audit(req, {
+      action: 'user.reset_password',
+      targetType: 'user',
+      targetId: id(req.params.id),
+      summary: 'أرسل رمز إعادة تعيين كلمة المرور إلى مستخدم',
+    });
     res.json({ message: 'تم إرسال رمز تعيين كلمة المرور إلى المستخدم.' });
   });
 

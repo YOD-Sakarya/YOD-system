@@ -94,7 +94,7 @@ test('temporary managed passwords restrict authenticated API requests until Neon
       if (sql.includes('UPDATE "Users"')) cleared = true;
       return { rows: [] };
     });
-    const context = { ...db, authProvider: 'neon' as const, verifyNeon: async () => identity };
+    const context = { ...db, authProvider: 'neon' as const, audit: async () => {}, verifyNeon: async () => identity };
     for (const path of ['/auth/me', '/documents', '/users']) {
       const request = { method: 'GET', path, get: () => 'Bearer test-token' };
       let result: unknown;
