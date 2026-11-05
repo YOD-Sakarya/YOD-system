@@ -15,7 +15,6 @@ import {
   type Fund,
   type TransactionKind,
 } from '../lib/budget';
-import { date } from '../lib/format';
 import type { User } from '../types';
 
 type Props = { user: User; cycleId: number | null; onToast: (message: string) => void };
@@ -145,50 +144,21 @@ export function BudgetPage({ user, cycleId, onToast }: Props) {
           </div>
           {summary && (
             <div className="stats-grid">
-              <div className="stat">
-                <div className="stat-value">
-                  <span className="stat-icon blue">
-                    <Paperclip size={20} />
+              {[
+                { icon: Paperclip, className: 'blue', value: summary.opening, label: 'الرصيد الافتتاحي' },
+                { icon: ArrowUpCircle, className: 'green', value: summary.income, label: 'إجمالي الدخل' },
+                { icon: ArrowDownCircle, className: 'red', value: summary.expense, label: 'إجمالي المصروف' },
+                { icon: Eye, className: 'amber', value: summary.balance, label: 'الرصيد المتبقي' },
+              ].map(tile => (
+                <div className="stat" key={tile.label}>
+                  <span className={`stat-icon ${tile.className}`}>
+                    <tile.icon size={20} />
                   </span>
-                  <div>
-                    <strong>{money(summary.opening)}</strong>
-                    <small>الرصيد الافتتاحي</small>
-                  </div>
+                  <span className="stat-value money-value">{money(tile.value)}</span>
+                  <strong>{tile.label}</strong>
+                  <small>{FUNDS[fund]}</small>
                 </div>
-              </div>
-              <div className="stat">
-                <div className="stat-value">
-                  <span className="stat-icon green">
-                    <ArrowUpCircle size={20} />
-                  </span>
-                  <div>
-                    <strong>{money(summary.income)}</strong>
-                    <small>إجمالي الدخل</small>
-                  </div>
-                </div>
-              </div>
-              <div className="stat">
-                <div className="stat-value">
-                  <span className="stat-icon red">
-                    <ArrowDownCircle size={20} />
-                  </span>
-                  <div>
-                    <strong>{money(summary.expense)}</strong>
-                    <small>إجمالي المصروف</small>
-                  </div>
-                </div>
-              </div>
-              <div className="stat">
-                <div className="stat-value">
-                  <span className="stat-icon amber">
-                    <Eye size={20} />
-                  </span>
-                  <div>
-                    <strong>{money(summary.balance)}</strong>
-                    <small>الرصيد المتبقي</small>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           )}
           <section className="panel">
@@ -218,7 +188,9 @@ export function BudgetPage({ user, cycleId, onToast }: Props) {
                   <tbody>
                     {rows.map(item => (
                       <tr key={item.id}>
-                        <td>{date(item.txDate, { year: 'numeric' })}</td>
+                        <td>
+                          <span dir="ltr">{item.txDate}</span>
+                        </td>
                         <td>
                           <span className={`status ${item.kind === 'income' ? 'success' : 'danger'}`}>
                             {item.kind === 'income' ? 'دخل' : 'مصروف'}

@@ -15,8 +15,9 @@ export const canViewBudget = (user: { roleId: number }) => BUDGET_VIEWER_ROLE_ID
 /** Only the financial officer records money in or out; everyone else, the developer included, only looks. */
 export const canManageBudget = (user: { roleId: number }) => user.roleId === FINANCE_ROLE_ID;
 
-export const money = (value: number) =>
-  new Intl.NumberFormat('ar', { style: 'currency', currency: 'TRY', numberingSystem: 'arab' }).format(value);
+const amountFormat = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+/** Latin digits (easier to read for amounts) with the lira sign; the isolate keeps it in order inside right-to-left text. */
+export const money = (value: number) => `\u2066${amountFormat.format(value)} ₺\u2069`;
 
 export type FundSummary = {
   fund: Fund;

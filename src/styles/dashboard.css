@@ -282,3 +282,10 @@
   font-size: 12px;
   min-height: 36px;
 }
+
+/* Budget tiles show money, which is longer than a count: smaller figures that never overflow the card. */
+.stat-value.money-value {
+  font-size: 22px;
+  white-space: nowrap;
+  text-align: left;
+}
