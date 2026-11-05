@@ -19,6 +19,9 @@ export const credentialFingerprint = (hash: string) => createHash('sha256').upda
 /** The developer administers the whole system: users, cycles, deletions and storage. */
 export const DEVELOPER_ROLE_ID = 11;
 export const isDeveloper = (user: Actor) => user.roleId === DEVELOPER_ROLE_ID;
+/** Visitor from the General Union (مراقب من الاتحاد العام): sees what members see plus the budgets, changes nothing. */
+export const OBSERVER_ROLE_ID = 14;
+export const isObserver = (user: Pick<Actor, 'roleId'>) => user.roleId === OBSERVER_ROLE_ID;
 /** Only these roles' reviews count towards a proposal's outcome. */
 export const canReview = (user: Actor) => [1, 3, 4].includes(user.roleId);
 export const canManageVotes = (user: Actor) => [1, 3].includes(user.roleId) || isDeveloper(user);
@@ -29,7 +32,7 @@ export const canEditDocument = (user: Actor, ownerId: number) =>
  * committee and the developer. Only the financial officer records money in or out.
  */
 export const FINANCE_ROLE_ID = 4;
-export const BUDGET_VIEWER_ROLE_IDS = [1, 3, FINANCE_ROLE_ID, 10, 12, 13];
+export const BUDGET_VIEWER_ROLE_IDS = [1, 3, FINANCE_ROLE_ID, 10, 12, 13, OBSERVER_ROLE_ID];
 export const canViewBudget = (user: Actor) => BUDGET_VIEWER_ROLE_IDS.includes(user.roleId) || isDeveloper(user);
 export const canManageBudget = (user: Actor) => user.roleId === FINANCE_ROLE_ID;
 /** Deleting vote sessions is reserved for the developer. */
@@ -55,7 +58,8 @@ export const isOversightRole = (roleId: number) => OVERSIGHT_ROLE_IDS.includes(r
 /** A vote session is either a meeting vote (everyone votes) or a decision vote (oversight members only watch). */
 export const VOTE_KIND_MEETING = 'اجتماع';
 export const VOTE_KIND_DECISION = 'قرار';
-export const canCastVote = (user: Actor, kind: string) => kind !== VOTE_KIND_DECISION || !isOversightRole(user.roleId);
+export const canCastVote = (user: Actor, kind: string) =>
+  !isObserver(user) && (kind !== VOTE_KIND_DECISION || !isOversightRole(user.roleId));
 
 /**
  * Roles whose acceptance a document needs before it is final:

@@ -311,3 +311,10 @@ column also holds `!neon-managed:` / `!neon-temporary:` markers (Better Auth sea
   payment deletes that line in the same transaction; the budget page refuses to delete such a line (409).
 - Same visibility and edit rules as the budget (`canViewBudget` / `canManageBudget`: only the financial officer changes anything).
 - `GET /api/subscriptions/export[?cycleId=]` returns an `.xlsx` (ExcelJS): sheet «الاشتراكات» (student × quarter) and «الدفعات».
+
+## General Union observer (مراقب من الاتحاد العام)
+
+- Role id 14 (`OBSERVER_ROLE_ID`, created by `db:upgrade`). A read-only visitor: sees documents, votes, calendar, committees and the
+  budgets/subscriptions (`canViewBudget`), but `authenticate` refuses every non-GET request except `/account/*` (own password,
+  email, username), so nothing can be added or changed whatever route is called. He cannot vote (`canCastVote`), has no
+  `RoleDocPerms`, is not a reviewer, and is not listed as a committee (`isCommitteeRole`). The developer creates him like any user.

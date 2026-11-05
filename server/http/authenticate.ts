@@ -2,7 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
 import { resolveNeonActor, verifyNeonToken } from '../neon-auth.js';
-import { type Actor, isTemporaryPassword, sessionVersion } from '../security.js';
+import { type Actor, isObserver, isTemporaryPassword, sessionVersion } from '../security.js';
 import type { AppContext } from './context.js';
 import { HttpError } from './errors.js';
 
@@ -68,6 +68,13 @@ export function authenticate(context: AppContext) {
         (req.method === 'GET' && req.path === '/auth/me') || (req.method === 'PUT' && req.path === '/account/password');
       if (req.actor.mustChangePassword && !allowedWhileRestricted)
         throw new HttpError(403, 'يجب تغيير كلمة المرور المؤقتة قبل استخدام مساحة العمل.');
+      // The General Union's observer only looks: every write is refused here, whatever the route (own account settings aside).
+      if (
+        isObserver(req.actor) &&
+        !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
+        !req.path.startsWith('/account/')
+      )
+        throw new HttpError(403, 'حساب المراقب للاطلاع فقط ولا يمكنه الإضافة أو التعديل.');
       next();
     } catch (error) {
       next(error instanceof jwt.JsonWebTokenError ? new HttpError(401, 'انتهت الجلسة. سجّل الدخول مجددًا.') : error);

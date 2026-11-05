@@ -4,17 +4,21 @@ export const PROPOSAL_TYPE_ID = 1;
 /** The developer administers users, cycles, deletions and storage. */
 export const DEVELOPER_ROLE_ID = 11;
 export const isDeveloper = (user: { roleId: number }) => user.roleId === DEVELOPER_ROLE_ID;
+/** Visitor from the General Union: sees everything members see plus the budgets, changes nothing (mirrors the server). */
+export const OBSERVER_ROLE_ID = 14;
+export const isObserver = (user: { roleId: number }) => user.roleId === OBSERVER_ROLE_ID;
 /** President, secretary general and financial officer review proposals. */
 export const REVIEWER_ROLE_IDS = [1, 3, 4];
 /** Oversight committee: chair, deputy chair and rapporteur. They review each other's uploads. */
 export const OVERSIGHT_ROLE_IDS = [10, 12, 13];
 export const isOversight = (user: { roleId: number }) => OVERSIGHT_ROLE_IDS.includes(user.roleId);
 /** Oversight members watch decision votes; meeting votes are open to everyone (mirrors the server rule). */
-export const canVoteOn = (user: { roleId: number }, kind: string) => kind !== 'قرار' || !isOversight(user);
+export const canVoteOn = (user: { roleId: number }, kind: string) =>
+  !isObserver(user) && (kind !== 'قرار' || !isOversight(user));
 /** President and secretary general (and the developer) manage vote sessions. */
 export const VOTE_MANAGER_ROLE_IDS = [1, 3, DEVELOPER_ROLE_ID];
-/** Every role except the developer works in a committee space. */
-export const isCommitteeRole = (role: { roleId: number }) => role.roleId !== DEVELOPER_ROLE_ID;
+/** Every role except the developer and the visitor works in a committee space. */
+export const isCommitteeRole = (role: { roleId: number }) => role.roleId !== DEVELOPER_ROLE_ID && !isObserver(role);
 
 /** Role names used in review rows, whatever the catalog language or wording. */
 export const REVIEWER_TITLES: Record<number, string> = {

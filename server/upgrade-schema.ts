@@ -14,6 +14,8 @@ import { authRevocationsSql } from './services/authSchema.js';
 const PREVIOUS = { name: '2025/2026', start: '2025-09-01', end: '2026-08-31' };
 const CURRENT = { name: '2026/2027', start: '2026-09-01' };
 const DEVELOPER_ROLE = { id: 11, name: 'مطوّر' };
+/** Read-only visitor from the General Union; it has no document permissions, so it can upload nothing. */
+const OBSERVER_ROLE = { id: 14, name: 'مراقب من الاتحاد العام' };
 /** The observer role (10) became the oversight committee: chair, deputy chair and rapporteur. */
 const OVERSIGHT_ROLES = [
   { id: 10, name: 'رئيس لجنة الرقابة' },
@@ -82,6 +84,11 @@ try {
   await client.query(
     'INSERT INTO "Roles" ("RoleId","RoleName") OVERRIDING SYSTEM VALUE VALUES ($1,$2) ON CONFLICT ("RoleId") DO NOTHING',
     [DEVELOPER_ROLE.id, DEVELOPER_ROLE.name],
+  );
+
+  await client.query(
+    'INSERT INTO "Roles" ("RoleId","RoleName") OVERRIDING SYSTEM VALUE VALUES ($1,$2) ON CONFLICT ("RoleId") DO NOTHING',
+    [OBSERVER_ROLE.id, OBSERVER_ROLE.name],
   );
 
   for (const role of OVERSIGHT_ROLES) {
