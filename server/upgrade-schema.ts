@@ -1,5 +1,6 @@
 import { pool } from './db.js';
 import { auditIndexSql, auditLogsSql } from './services/audit.js';
+import { budgetTablesSql } from './services/budget.js';
 import { authRevocationsSql } from './services/authSchema.js';
 
 /**
@@ -28,6 +29,8 @@ try {
   // Activity log (who did what); read by the developer in the admin console.
   await client.query(auditLogsSql);
   await client.query(auditIndexSql);
+  // Budgets (union treasury and صندوق فزعة) per yearly cycle.
+  for (const statement of budgetTablesSql) await client.query(statement);
 
   await client.query(`CREATE TABLE IF NOT EXISTS "Cycles" (
     "CycleId" SERIAL PRIMARY KEY,

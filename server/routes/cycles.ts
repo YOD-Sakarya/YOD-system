@@ -3,12 +3,16 @@ import { z } from 'zod';
 import type { AppContext } from '../http/context.js';
 import { fail, id } from '../http/errors.js';
 import { requireDeveloper } from '../http/requireDeveloper.js';
+import { roundMoney } from '../services/budget.js';
 import { deleteCloudFiles } from '../services/storage.js';
 
 const deleteCycleSchema = z.object({ confirm: z.string() });
 const newCycleSchema = z.object({
   name: z.string().trim().min(3).max(40),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  // What is left in each budget when the year starts (the developer is reminded of last year's closing balance).
+  openingUnion: z.number().finite().min(-1e9).max(1e9),
+  openingFaza: z.number().finite().min(-1e9).max(1e9),
 });
 
 /**
@@ -48,7 +52,17 @@ export function cycleRoutes({ query, transaction, audit }: AppContext) {
         'INSERT INTO "Cycles" ("Name","StartDate","IsCurrent") VALUES ($1,$2,true) RETURNING "CycleId" AS id',
         [body.name, body.startDate],
       );
-      return created.rows[0].id as number;
+      const newId = created.rows[0].id as number;
+      for (const [fund, amount] of [
+        ['union', body.openingUnion],
+        ['faza', body.openingFaza],
+      ] as const)
+        await client.query('INSERT INTO "BudgetOpening" ("CycleId","Fund","Amount") VALUES ($1,$2,$3)', [
+          newId,
+          fund,
+          roundMoney(amount),
+        ]);
+      return newId;
     });
     await audit(req, {
       action: 'cycle.create',
@@ -78,6 +92,10 @@ export function cycleRoutes({ query, transaction, audit }: AppContext) {
       const files = (await client.query('SELECT "FilePath" FROM "Documents" WHERE "CycleId"=$1', [cycleId])).rows.map(
         row => row.FilePath as string,
       );
+      // Financial records are never removed by the developer: a year with budget entries cannot be deleted.
+      if ((await client.query('SELECT 1 FROM "BudgetTransactions" WHERE "CycleId"=$1 LIMIT 1', [cycleId])).rowCount)
+        fail(409, 'لا يمكن حذف عام يحتوي على حركات مالية. السجلات المالية للقراءة فقط.');
+      await client.query('DELETE FROM "BudgetOpening" WHERE "CycleId"=$1', [cycleId]);
       // Children first: reviews belong to documents; votes and options belong to sessions.
       await client.query(
         'DELETE FROM "Reviews" WHERE "DocId" IN (SELECT "DocId" FROM "Documents" WHERE "CycleId"=$1)',

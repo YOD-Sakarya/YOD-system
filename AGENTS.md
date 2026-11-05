@@ -287,3 +287,17 @@ column also holds `!neon-managed:` / `!neon-temporary:` markers (Better Auth sea
 - **Developer reviews.** The developer may accept or reject any document in the name of any reviewer role it needs
   (`POST /api/reviews` with `asRoleId`, also for archived years). The review is stored on the seat holding that role so
   `reviewStatus` is unchanged; the log line says «نيابةً عن …» and names the developer as the actor.
+
+## Budgets
+
+- Two budgets per yearly cycle: `union` (خزينة الاتحاد) and `faza` (صندوق فزعة). Tables `BudgetOpening` (opening balance per
+  cycle and fund) and `BudgetTransactions` (income/expense with date, category, optional receipt) come from `npm run db:upgrade`.
+  Categories live in `server/services/budget.ts` (mirrored in `src/lib/budget.ts`): income اشتراكات/إعلانات/دعم/أخرى, spending
+  أنشطة/مواصلات/ضيافة/مطبوعات/أخرى.
+- **Who:** the president (1), secretary general (3), financial officer (4), oversight (10/12/13) and the developer can see the
+  budgets and receipts (`canViewBudget`). **Only the financial officer (4) adds or deletes entries** (`canManageBudget`); the
+  developer is view-only. Receipts are served only through `/api/budget/transactions/:id/view|download` behind the same check.
+- Opening balances are typed once, when the developer creates a year (`POST /api/cycles` requires `openingUnion` and
+  `openingFaza`; the form shows last year's closing balance as a reminder). There is no endpoint to change them afterwards.
+  A year with budget entries cannot be deleted. Entries of finished years are read-only.
+- Money is `numeric(14,2)`; sums are rounded with `roundMoney`. Every add/delete/receipt view is written to the activity log.

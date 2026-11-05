@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Check, LoaderCircle, Plus, Trash2 } from 'lucide-react';
 import { Modal } from '../../components/ui/Modal';
 import { api, json } from '../../lib/api';
+import { FUND_IDS, FUNDS, money, type BudgetReport, type Fund } from '../../lib/budget';
 import { number } from '../../lib/format';
 import type { Cycle } from '../../types';
 import { DeleteCycleDialog, type DeletedCycleSummary } from './DeleteCycleDialog';
@@ -22,6 +23,16 @@ export function CyclesPanel({ cycles, onChanged }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const current = cycles.find(c => c.isCurrent);
+  // What is left in each budget now: shown as a reminder when typing the new year's opening balances.
+  const [closing, setClosing] = useState<Partial<Record<Fund, number>>>({});
+  const [opening, setOpening] = useState<Record<Fund, string>>({ union: '', faza: '' });
+  useEffect(() => {
+    if (!creating) return;
+    setOpening({ union: '', faza: '' });
+    api<BudgetReport>('/budget')
+      .then(report => setClosing(Object.fromEntries(report.funds.map(item => [item.fund, item.balance]))))
+      .catch(() => setClosing({}));
+  }, [creating]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -29,7 +40,15 @@ export function CyclesPanel({ cycles, onChanged }: Props) {
     setError('');
     const values = Object.fromEntries(new FormData(event.currentTarget));
     try {
-      await api('/cycles', { method: 'POST', body: json(values) });
+      await api('/cycles', {
+        method: 'POST',
+        body: json({
+          name: values.name,
+          startDate: values.startDate,
+          openingUnion: Number(opening.union),
+          openingFaza: Number(opening.faza),
+        }),
+      });
       await onChanged();
       setCreating(false);
     } catch (e) {
@@ -137,6 +156,34 @@ export function CyclesPanel({ cycles, onChanged }: Props) {
                 تاريخ البداية
                 <input name="startDate" type="date" required />
               </label>
+            </div>
+            <p className="form-notice">اكتب ما تبقّى في كل ميزانية عند بداية العام الجديد. لا يمكن تغييره بعد ذلك.</p>
+            <div className="form-grid">
+              {FUND_IDS.map(fund => (
+                <label key={fund}>
+                  الرصيد المتبقي: {FUNDS[fund]} (₺)
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    dir="ltr"
+                    value={opening[fund]}
+                    onChange={event => setOpening(state => ({ ...state, [fund]: event.target.value }))}
+                  />
+                  {closing[fund] !== undefined && (
+                    <small>
+                      رصيد العام السابق: {money(closing[fund]!)}{' '}
+                      <button
+                        type="button"
+                        className="text-link"
+                        onClick={() => setOpening(state => ({ ...state, [fund]: String(closing[fund]) }))}
+                      >
+                        نفس الرصيد
+                      </button>
+                    </small>
+                  )}
+                </label>
+              ))}
             </div>
             <div className="form-actions">
               <button type="button" className="button secondary" disabled={busy} onClick={() => setCreating(false)}>

@@ -12,6 +12,7 @@ import { HttpError } from './http/errors.js';
 import type { NeonIdentity } from './neon-auth.js';
 import { publicAuthRoutes, sessionRoutes } from './routes/auth.js';
 import { accountRoutes } from './routes/account.js';
+import { budgetRoutes } from './routes/budget.js';
 import { catalogRoutes } from './routes/catalog.js';
 import { cycleRoutes } from './routes/cycles.js';
 import { documentRoutes } from './routes/documents.js';
@@ -105,6 +106,7 @@ export function createApp(dependencies: Dependencies = {}) {
   app.use('/api/reviews', reviewRoutes(context));
   app.use('/api/votes', voteRoutes(context));
   app.use('/api/cycles', cycleRoutes(context));
+  app.use('/api/budget', budgetRoutes(context));
   // Developer-only administration.
   app.use('/api/users', userRoutes(context));
   app.use('/api/storage', storageUsageRoutes(context));

@@ -24,6 +24,14 @@ export const canReview = (user: Actor) => [1, 3, 4].includes(user.roleId);
 export const canManageVotes = (user: Actor) => [1, 3].includes(user.roleId) || isDeveloper(user);
 export const canEditDocument = (user: Actor, ownerId: number) =>
   user.userId === ownerId || canReview(user) || isDeveloper(user);
+/**
+ * The union's budgets are visible to the president (1), secretary general (3), financial officer (4), the oversight
+ * committee and the developer. Only the financial officer records money in or out.
+ */
+export const FINANCE_ROLE_ID = 4;
+export const BUDGET_VIEWER_ROLE_IDS = [1, 3, FINANCE_ROLE_ID, 10, 12, 13];
+export const canViewBudget = (user: Actor) => BUDGET_VIEWER_ROLE_IDS.includes(user.roleId) || isDeveloper(user);
+export const canManageBudget = (user: Actor) => user.roleId === FINANCE_ROLE_ID;
 /** Deleting vote sessions is reserved for the developer. */
 export const canDelete = isDeveloper;
 /**

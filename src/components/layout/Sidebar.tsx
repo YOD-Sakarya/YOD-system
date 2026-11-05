@@ -1,7 +1,8 @@
 import { useRef } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { ChevronLeft, LogOut, ShieldCheck, Users, X } from 'lucide-react';
-import { adminNavigation, navigation } from '../../data/navigation';
+import { adminNavigation, budgetNavigation, navigation } from '../../data/navigation';
+import { canViewBudget } from '../../lib/budget';
 import { useSidebarPanel } from '../../hooks/useSidebarPanel';
 import { number } from '../../lib/format';
 import { isCommitteeRole, isDeveloper } from '../../lib/roles';
@@ -24,7 +25,11 @@ export function Sidebar({ user, roles, pendingReviews, open, mobile, onClose, on
   const location = useLocation();
   const selectedRole = new URLSearchParams(location.search).get('role');
   const committees = roles.filter(isCommitteeRole);
-  const items = isDeveloper(user) ? [...navigation, adminNavigation] : navigation;
+  const items = [
+    ...navigation,
+    ...(canViewBudget(user) ? [budgetNavigation] : []),
+    ...(isDeveloper(user) ? [adminNavigation] : []),
+  ];
   // Focus trap and scroll lock only apply while the mobile panel is open.
   useSidebarPanel(panelRef, open && mobile, onClose);
 
