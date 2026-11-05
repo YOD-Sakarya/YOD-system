@@ -47,7 +47,8 @@ export function budgetRoutes({ query, audit }: AppContext) {
     const transactions = await query(
       `SELECT t."TransactionId" AS id, t."Fund" AS fund, t."Kind" AS kind, t."Amount"::float8 AS amount,
           t."Category" AS category, t."Description" AS description, t."TxDate"::text AS "txDate",
-          t."CreatedAt" AS "createdAt", u."FullName" AS "createdByName", (t."FilePath" IS NOT NULL) AS "hasAttachment"
+          t."CreatedAt" AS "createdAt", u."FullName" AS "createdByName", (t."FilePath" IS NOT NULL) AS "hasAttachment",
+          EXISTS (SELECT 1 FROM "SubscriptionPayments" sp WHERE sp."BudgetTransactionId"=t."TransactionId") AS "fromSubscription"
         FROM "BudgetTransactions" t JOIN "Users" u ON u."UserId"=t."CreatedByUserId"
         WHERE t."CycleId"=$1 ORDER BY t."TxDate" DESC, t."TransactionId" DESC LIMIT 2000`,
       [cycleId],

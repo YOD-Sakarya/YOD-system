@@ -39,6 +39,8 @@ export type BudgetTransaction = {
   createdAt: string;
   createdByName: string;
   hasAttachment: boolean;
+  /** Created by a student subscription: it is removed from the subscriptions page, not here. */
+  fromSubscription: boolean;
 };
 export type BudgetReport = {
   cycleId: number;

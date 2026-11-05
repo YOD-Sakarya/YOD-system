@@ -56,6 +56,7 @@ export function SubscriptionsPage({ user, cycleId, onToast }: Props) {
   }, [report, filter]);
   const total = (report?.payments ?? []).reduce((sum, payment) => sum + payment.amount, 0);
   const payments = (report?.payments ?? []).filter(payment => matchesText(payment.studentName, filter));
+  const pending = payments.find(payment => payment.id === removing);
 
   async function remove(payment: SubscriptionPayment) {
     setBusy(true);
@@ -193,6 +194,22 @@ export function SubscriptionsPage({ user, cycleId, onToast }: Props) {
                 <p>من الأحدث إلى الأقدم.</p>
               </div>
             </div>
+            {pending && (
+              <div className="delete-confirm" role="alert">
+                <strong>
+                  هل تريد حذف اشتراك {pending.studentName} ({quarterNames(pending.quarters)})؟
+                </strong>
+                <p>
+                  سيُحذف الاشتراك ويُخصم مبلغ {money(pending.amount)} من خزينة الاتحاد، لأنه أُضيف إليها عند التسجيل.
+                </p>
+                <button className="button danger-solid" disabled={busy} onClick={() => void remove(pending)}>
+                  نعم، احذف الاشتراك
+                </button>
+                <button className="button secondary" disabled={busy} onClick={() => setRemoving(null)}>
+                  تراجع
+                </button>
+              </div>
+            )}
             {!payments.length && <Empty title="لا توجد دفعات" text="لا توجد دفعات مطابقة." />}
             {payments.length > 0 && (
               <div className="table-scroll">
@@ -218,25 +235,16 @@ export function SubscriptionsPage({ user, cycleId, onToast }: Props) {
                         <td dir="ltr">{money(payment.amount)}</td>
                         <td>{payment.createdByName}</td>
                         <td>
-                          {mayEdit &&
-                            (removing === payment.id ? (
-                              <button
-                                className="button danger-solid"
-                                disabled={busy}
-                                onClick={() => void remove(payment)}
-                              >
-                                تأكيد الحذف
-                              </button>
-                            ) : (
-                              <button
-                                className="icon-button danger-icon"
-                                aria-label="حذف الدفعة"
-                                title="حذف الدفعة"
-                                onClick={() => setRemoving(payment.id)}
-                              >
-                                <Trash2 size={17} />
-                              </button>
-                            ))}
+                          {mayEdit && (
+                            <button
+                              className="icon-button danger-icon"
+                              aria-label="حذف الدفعة"
+                              title="حذف الدفعة"
+                              onClick={() => setRemoving(payment.id)}
+                            >
+                              <Trash2 size={17} />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
