@@ -13,7 +13,8 @@ const FINANCE_ROLE_ID = 4;
 const BUDGET_VIEWER_ROLE_IDS = [1, 3, FINANCE_ROLE_ID, 10, 12, 13, 11];
 export const canViewBudget = (user: { roleId: number }) => BUDGET_VIEWER_ROLE_IDS.includes(user.roleId);
 /** Only the financial officer records money in or out; everyone else, the developer included, only looks. */
-export const canManageBudget = (user: { roleId: number }) => user.roleId === FINANCE_ROLE_ID;
+// TESTING ONLY (branch test/budget-developer-edit): the developer may also add and delete. Never merge to main.
+export const canManageBudget = (user: { roleId: number }) => user.roleId === FINANCE_ROLE_ID || user.roleId === 11;
 
 const amountFormat = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 /** Latin digits (easier to read for amounts) with the lira sign; the isolate keeps it in order inside right-to-left text. */

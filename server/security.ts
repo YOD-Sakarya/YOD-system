@@ -31,7 +31,8 @@ export const canEditDocument = (user: Actor, ownerId: number) =>
 export const FINANCE_ROLE_ID = 4;
 export const BUDGET_VIEWER_ROLE_IDS = [1, 3, FINANCE_ROLE_ID, 10, 12, 13];
 export const canViewBudget = (user: Actor) => BUDGET_VIEWER_ROLE_IDS.includes(user.roleId) || isDeveloper(user);
-export const canManageBudget = (user: Actor) => user.roleId === FINANCE_ROLE_ID;
+// TESTING ONLY (branch test/budget-developer-edit): the developer may also add and delete. Never merge to main.
+export const canManageBudget = (user: Actor) => user.roleId === FINANCE_ROLE_ID || isDeveloper(user);
 /** Deleting vote sessions is reserved for the developer. */
 export const canDelete = isDeveloper;
 /**
