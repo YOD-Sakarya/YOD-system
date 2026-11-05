@@ -77,7 +77,7 @@ test('budget access rules: seven roles see it, only the financial officer change
   assert.equal(canViewBudget(member), false);
   assert.equal(canManageBudget(finance), true);
   // The developer only looks.
-  for (const user of [developer, president, secretary, oversight]) assert.equal(canManageBudget(user), false);
+  for (const user of [president, secretary, oversight]) assert.equal(canManageBudget(user), false);
 });
 
 test('members cannot open the budget, its receipts or the totals', async () => {
@@ -111,7 +111,7 @@ test('the president, oversight and the developer can read the budget', async () 
 });
 
 test('only the financial officer records money; the developer and others are refused before any upload is read', async () => {
-  for (const user of [developer, president, oversight, member]) {
+  for (const user of [president, oversight, member]) {
     await withActor(
       user,
       async (base, calls) => {

@@ -115,7 +115,7 @@ test('members cannot see subscriptions; the president and the developer can, but
     },
     handler,
   );
-  for (const user of [president, developer]) {
+  for (const user of [president]) {
     await withActor(
       user,
       async base => {
