@@ -88,6 +88,12 @@ export function BudgetPage({ user, cycleId, onToast }: Props) {
 
   const summary = report?.funds.find(item => item.fund === fund);
   const rows = report?.transactions.filter(item => item.fund === fund) ?? [];
+  // Deleting a line changes the balance: spell out by how much before the financial officer confirms.
+  const pending = rows.find(item => item.id === removing);
+  const balanceAfter =
+    pending && summary
+      ? Math.round((summary.balance + (pending.kind === 'income' ? -pending.amount : pending.amount)) * 100) / 100
+      : 0;
 
   return (
     <>
@@ -168,6 +174,23 @@ export function BudgetPage({ user, cycleId, onToast }: Props) {
                 <p>من الأحدث إلى الأقدم، مع تاريخ كل حركة.</p>
               </div>
             </div>
+            {pending && summary && (
+              <div className="delete-confirm" role="alert">
+                <strong>هل تريد حذف هذه الحركة؟</strong>
+                <p>
+                  {pending.kind === 'income'
+                    ? `سيُخصم ${money(pending.amount)} من ${FUNDS[pending.fund]} لأنه دخل مسجَّل (${pending.category}).`
+                    : `سيُعاد ${money(pending.amount)} إلى ${FUNDS[pending.fund]} لأنه مصروف مسجَّل (${pending.category}).`}{' '}
+                  سيتغيّر الرصيد المتبقي من {money(summary.balance)} إلى {money(balanceAfter)}.
+                </p>
+                <button className="button danger-solid" disabled={busy} onClick={() => void remove(pending)}>
+                  نعم، احذف الحركة
+                </button>
+                <button className="button secondary" disabled={busy} onClick={() => setRemoving(null)}>
+                  تراجع
+                </button>
+              </div>
+            )}
             {!rows.length && <Empty title="لا توجد حركات" text="لم تُسجَّل أي حركة في هذه الميزانية بعد." />}
             {rows.length > 0 && (
               <div className="table-scroll">
@@ -196,7 +219,14 @@ export function BudgetPage({ user, cycleId, onToast }: Props) {
                             {item.kind === 'income' ? 'دخل' : 'مصروف'}
                           </span>
                         </td>
-                        <td>{item.category}</td>
+                        <td>
+                          {item.category}
+                          {item.fromSubscription && (
+                            <span className="tag" style={{ marginInlineStart: 8 }}>
+                              من الاشتراكات
+                            </span>
+                          )}
+                        </td>
                         <td dir="ltr">
                           {item.kind === 'income' ? '+' : '−'} {money(item.amount)}
                         </td>
@@ -224,25 +254,16 @@ export function BudgetPage({ user, cycleId, onToast }: Props) {
                                 </button>
                               </>
                             )}
-                            {mayEdit &&
-                              (removing === item.id ? (
-                                <button
-                                  className="button danger-solid"
-                                  disabled={busy}
-                                  onClick={() => void remove(item)}
-                                >
-                                  تأكيد الحذف
-                                </button>
-                              ) : (
-                                <button
-                                  className="icon-button danger-icon"
-                                  aria-label="حذف الحركة"
-                                  title="حذف الحركة"
-                                  onClick={() => setRemoving(item.id)}
-                                >
-                                  <Trash2 size={17} />
-                                </button>
-                              ))}
+                            {mayEdit && !item.fromSubscription && (
+                              <button
+                                className="icon-button danger-icon"
+                                aria-label="حذف الحركة"
+                                title="حذف الحركة"
+                                onClick={() => setRemoving(item.id)}
+                              >
+                                <Trash2 size={17} />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
