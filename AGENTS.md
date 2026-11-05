@@ -281,6 +281,7 @@ column also holds `!neon-managed:` / `!neon-temporary:` markers (Better Auth sea
   ones, under the attempted name), account changes, user administration, document create/edit/delete/view/download,
   reviews, vote create/cast/close/delete and year start/delete. Routes call `audit(req, { action, summary, details })` **after** the
   action succeeded; a logging failure is swallowed (and printed) so it can never break a request, e.g. before the table exists.
+  Entries older than 7 days (`AUDIT_RETENTION_DAYS`) are deleted: hourly per instance on writes, and when the console loads.
   Never log passwords, tokens or what a member voted. The developer reads it at `GET /api/logs` (filters `action` family,
   `userId`, `q`, `before` cursor) and in the admin console tab «سجل النشاط».
 - **Developer reviews.** The developer may accept or reject any document in the name of any reviewer role it needs

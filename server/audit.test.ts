@@ -172,3 +172,14 @@ test('the developer decides in the name of a reviewer role; others still cannot'
     assert.equal(response.status, 403);
   });
 });
+
+test('log entries older than a week are deleted, at most once an hour per instance', async () => {
+  const deletes: unknown[][] = [];
+  const audit = createAudit((async (sql: string, values: unknown[]) => {
+    if (sql.startsWith('DELETE FROM "AuditLogs"')) deletes.push(values);
+    return [];
+  }) as unknown as typeof query);
+  await audit({ actor: developer, ip: '' }, { action: 'a.b', summary: 'x' });
+  await audit({ actor: developer, ip: '' }, { action: 'a.b', summary: 'y' });
+  assert.deepEqual(deletes, [[7]]);
+});

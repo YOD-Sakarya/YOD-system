@@ -17,6 +17,21 @@ export const auditLogsSql = `CREATE TABLE IF NOT EXISTS "AuditLogs" (
 )`;
 export const auditIndexSql = 'CREATE INDEX IF NOT EXISTS "AuditLogs_CreatedAt" ON "AuditLogs" ("CreatedAt" DESC)';
 
+/** Entries older than this are deleted so the log never grows without bound. */
+export const AUDIT_RETENTION_DAYS = 7;
+const PRUNE_EVERY_MS = 60 * 60 * 1000;
+
+/** Deletes expired entries. Safe to call often; failures are only reported to the server console. */
+export async function pruneAuditLogs(query: typeof databaseQuery) {
+  try {
+    await query(`DELETE FROM "AuditLogs" WHERE "CreatedAt" < NOW() - ($1::int * INTERVAL '1 day')`, [
+      AUDIT_RETENTION_DAYS,
+    ]);
+  } catch (error) {
+    console.error('Audit log cleanup failed:', error instanceof Error ? error.message : 'unknown error');
+  }
+}
+
 export type AuditEntry = {
   /** Dotted event name such as `document.delete`; the console groups and filters by it. */
   action: string;
@@ -37,6 +52,8 @@ export type Audit = (req: Pick<Request, 'actor' | 'ip'>, entry: AuditEntry) => P
  * break the request it describes, so errors are only reported to the server console.
  */
 export function createAudit(query: typeof databaseQuery): Audit {
+  // Serverless instances come and go, so cleanup piggybacks on writes (at most once an hour per instance).
+  let lastPrune = 0;
   return async (req, entry) => {
     const actor = entry.actor ?? req.actor;
     try {
@@ -57,6 +74,10 @@ export function createAudit(query: typeof databaseQuery): Audit {
       );
     } catch (error) {
       console.error('Audit log failed:', error instanceof Error ? error.message : 'unknown error');
+    }
+    if (Date.now() - lastPrune > PRUNE_EVERY_MS) {
+      lastPrune = Date.now();
+      await pruneAuditLogs(query);
     }
   };
 }

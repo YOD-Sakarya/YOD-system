@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import type { AppContext } from '../http/context.js';
 import { requireDeveloper } from '../http/requireDeveloper.js';
+import { pruneAuditLogs } from '../services/audit.js';
 
 const filterSchema = z.object({
   limit: z.coerce.number().int().min(1).max(200).default(100),
@@ -20,6 +21,8 @@ export function logRoutes({ query }: AppContext) {
 
   router.get('/', async (req, res) => {
     const filter = filterSchema.parse(req.query);
+    // Opening the console also clears expired entries, so a quiet system still stays tidy.
+    await pruneAuditLogs(query);
     const escape = (text: string) => text.replace(/[\%_]/g, '\$&');
     const rows = await query(
       `SELECT "LogId" AS id, "CreatedAt" AS "createdAt", "ActorUserId" AS "actorUserId", "ActorName" AS "actorName",
